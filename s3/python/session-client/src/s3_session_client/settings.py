@@ -1,0 +1,2 @@
+S3_SERVICE_NAME = "s3"
+

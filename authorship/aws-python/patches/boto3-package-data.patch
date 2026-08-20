@@ -1,0 +1,19 @@
+diff --git a/setup.py b/setup.py
+index b9324dd..65c3353 100644
+--- a/setup.py
++++ b/setup.py
+@@ -34,6 +34,13 @@ setup(
+     scripts=[],
+     packages=find_packages(exclude=['tests*']),
+-    package_data={'boto3': ['data/aws/resources/*.json', 'examples/*.rst']},
++    package_data={
++        'boto3': [
++            'data/aws/resources/*.json',
++            'examples/*.rst',
++            'runtimeconditions/index.json',
++            'runtimeconditions/mappings/*.json',
++        ]
++    },
+     include_package_data=True,
+     install_requires=requires,
+     license="Apache-2.0",

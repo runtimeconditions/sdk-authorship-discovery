@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "runtimeconditions-sdk-s3-direct-client"
+version = "0.1.0"
+description = "Direct boto3 S3 client scenario for Runtime Conditions SDK mapping research"
+requires-python = ">=3.10"
+dependencies = ["boto3==1.43.70"]
+
+[project.scripts]
+s3-direct-upload = "s3_direct_client.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
