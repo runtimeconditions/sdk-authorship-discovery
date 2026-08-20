@@ -109,8 +109,8 @@ The index identifies the owning distribution, exact installed version, mapping i
 | Build and install local SDK wheels without registry publication | Proved |
 | Discover installed mappings recursively without importing SDK modules | Proved |
 | Preserve existing application behavior with the rebuilt SDK packages | Proved across seven application fixtures |
-| Automatically react to new upstream releases | Not implemented |
-| Classify release drift and create a concise maintainer review report | Not implemented |
+| Process configured immutable upstream releases automatically | Implemented through a manually triggered historical workflow; live watching is not implemented |
+| Classify release drift and create a concise maintainer review report | Implemented and exercised against ten releases |
 | Publish official or community mapping artifacts continuously | Not implemented |
 | Consume the mapping in a language profiler | Not implemented |
 | Establish a cross-language mapping standard | Not decided |
@@ -125,17 +125,9 @@ Yes, the architecture and current generator/validator boundaries support that di
 
 The existing tools already accept source models, source trees, versions, reviewed overlays, and output paths. They generate deterministic artifacts, reject owner/version mismatches, validate references, and stage metadata into package source. Those are the difficult core operations a release job needs.
 
-What is still missing is the release-maintenance control plane:
+The historical maintenance control plane is now implemented: it obtains immutable tags, derives and validates source versions, checks the selected dependency tuple against source declarations, regenerates and validates owner mappings, classifies the release, optionally builds and installs the owner graph, runs application fixtures, and emits machine-readable and maintainer-facing reports. Redundant exact-version fields were removed from the boto3 and s3transfer semantic overlays; version identity remains enforced in generated metadata, source validation, staging, and installed discovery.
 
-- no workflow currently watches or receives releases from boto3, botocore, or s3transfer;
-- no job obtains a new tag, selects the correct inputs, runs the full pipeline, and records the result;
-- no classifier distinguishes a safe mechanical regeneration from a semantic change requiring review;
-- no concise release report is generated for maintainers;
-- no official or community publication path has been selected;
-- no integration job validates a newly resolved compatible combination of the three independently released packages;
-- the boto3 and s3transfer overlays currently contain exact expected-version fields, which would force meaningless edits on routine releases and therefore conflict with the intended maintenance experience.
-
-The last point is important. Version identity belongs in generated metadata and must be checked against the source or built artifact. It should not normally be a human-maintained semantic-overlay change. Semantic fingerprints are different: when an operation set or meaningful behavior changes, the job should stop until that change is reviewed.
+What remains missing is live upstream release detection, automatic pull-request construction, an official or community publication path, and evidence across a genuine semantic change. Semantic fingerprints remain deliberate review gates: when an operation set or meaningful behavior changes, the job stops instead of silently accepting it.
 
 ### SDK-owned automation
 
@@ -217,15 +209,9 @@ Those mechanics should not dominate this review. The detailed service operation 
 
 The three reviewed example overlays are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The generated JSON should only be inspected for representative spot checks or to investigate a failed validation claim.
 
-## The next step
+## Current maintenance experiment
 
-The next step is a release-maintenance rehearsal, not another S3 feature expansion and not profiler integration.
-
-The remaining adoption question is whether this architecture makes continuing SDK maintenance acceptably small and predictable. A repository watcher by itself cannot answer that question; it only starts a job. We first need a repeatable job that can process releases and demonstrate exactly when a maintainer is interrupted.
-
-### Proposed milestone: repeatable mapping update runner
-
-Build one maintainer-facing update runner that:
+The repeatable release-maintenance runner and manually triggered GitHub workflow are implemented. The runner:
 
 1. Accepts an owner repository and immutable release tag as input.
 2. Obtains and verifies the source version without requiring a semantic-overlay version edit.
@@ -236,9 +222,13 @@ Build one maintainer-facing update runner that:
 7. Produces a concise Markdown review report containing the affected authored inputs, upstream source/model changes, counts, digests, diagnostics, and representative traces.
 8. Emits deterministic artifacts suitable for a pull request or release job.
 
-### Historical release test
+### Initial historical result
 
-Run the update runner across a sequence of real historical releases rather than only the versions used to build the proof. A useful first sample is at least ten consecutive boto3/botocore releases ending at the current proof version, plus every s3transfer release compatible during the same interval.
+The first sample ran ten consecutive boto3/botocore releases from 1.43.61 through 1.43.70 with s3transfer 0.19.2. All ten static runs were automatic, required no authored mapping change, and produced no semantic mapping difference from the accepted baseline. Full package and application verification also passed at 1.43.61, 1.43.69, and 1.43.70. The result and its limits are recorded in [`../../evidence/aws-python/2026-08-20-initial-historical-rehearsal.md`](../../evidence/aws-python/2026-08-20-initial-historical-rehearsal.md).
+
+This result demonstrates a zero-touch routine-release path but does not yet test a real semantic interruption or an s3transfer version transition. The next sample must expand backward until it crosses genuine SDK or service behavior drift, then measure whether the resulting review request is precise and tolerable.
+
+For each release, continue to record:
 
 For each release, record:
 
@@ -261,7 +251,7 @@ The milestone succeeds only if:
 - the application experience remains unchanged;
 - the release report is understandable enough to use in an SDK maintainer interview.
 
-After this rehearsal, the same runner can be connected to an SDK-owned release workflow or a community upstream watcher. The measured reports should then be taken to boto3, botocore, and s3transfer maintainers to test whether the burden and diagnostics are acceptable. Only after that feedback should the candidate contract be revised or frozen for a first profiler-consumption prototype.
+After clean GitHub Actions reruns and evidence across at least one genuine semantic change, the same runner can be connected to an SDK-owned release workflow or a community upstream watcher. The measured reports should then be taken to boto3, botocore, and s3transfer maintainers to test whether the burden and diagnostics are acceptable. Only after that feedback should the candidate contract be revised or frozen for a first profiler-consumption prototype.
 
 ## Decisions intentionally deferred
 

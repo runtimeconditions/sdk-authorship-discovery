@@ -90,3 +90,7 @@ recursively verifies them without SDK imports, and leaves every application
 project unchanged. The earlier combined-boto3 checkpoint remains under
 [`authorship/boto3`](authorship/boto3/) because it records the ownership problem
 that led to the recursive design.
+
+## Historical maintenance automation
+
+[`maintenance/aws-python-s3`](maintenance/aws-python-s3/) defines the immutable release tuples and maintainer-evidence rules for the historical experiment. The single-release runner, replay wrapper, and manually triggered GitHub workflow regenerate owner mappings, classify drift, optionally build and install the SDK graph, run the application fixtures, and retain focused reports without editing semantic overlays. The first ten-release result is recorded in [`evidence/aws-python/2026-08-20-initial-historical-rehearsal.md`](evidence/aws-python/2026-08-20-initial-historical-rehearsal.md).

@@ -58,6 +58,8 @@ counts, digests, validation diagnostics, and representative traces.
 
 ## Validation and maintenance experience
 
+The historical maintenance runner derives distribution versions from immutable source rather than semantic overlays, validates selected owner versions against the SDKs' source-declared dependency ranges, and classifies each release as automatic, review-required, or invalid. The first ten-release sample from boto3/botocore 1.43.61 through 1.43.70 required no authored mapping changes; full package and application checks passed at the oldest release, immediate predecessor, and baseline. This is initial evidence for zero-touch routine releases, not evidence yet about a genuine semantic interruption or an s3transfer release transition.
+
 The source gate reads pinned SDK source without importing it and rejects:
 
 - distribution-version mismatch;
@@ -154,3 +156,5 @@ should test:
 | 2026-08-14 | Split metadata across botocore, boto3, and s3transfer and compose it recursively. | Each package maintains only behavior it versions; nested wrappers do not force duplication. |
 | 2026-08-14 | Validate handwritten bindings and implementation operation sets against pinned source. | Wrapper drift becomes a focused build error; the gate caught a real annotation defect. |
 | 2026-08-14 | Preserve mutually exclusive runtime execution paths in transfer metadata. | SDK authors describe actual behavior without forcing mapping-layer policy for ambiguous application source. |
+| 2026-08-20 | Remove exact distribution-version pins from semantic overlays and derive them from immutable source. | Routine releases do not manufacture meaningless authored version-only changes; generated and installed metadata still enforce exact ownership. |
+| 2026-08-20 | Add a release-maintenance runner, historical replay workflow, focused classification, and maintainer report. | Ten consecutive boto3/botocore releases regenerated with zero authored changes; broader history must now test a real semantic interruption. |
