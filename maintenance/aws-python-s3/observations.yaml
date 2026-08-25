@@ -1,0 +1,60 @@
+experiment: aws-python-s3
+latestObservation:
+  classification: automatic
+  completedAt: '2026-08-25T13:07:51.048946Z'
+  evidence: evidence/aws-python/ongoing/ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2
+  extension:
+    id: https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml
+    semanticSha256: 1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+    serviceMappingSemanticSha256: 54a92a0dc07c238ac56b125ca74f5bdcafa2741a45afd2440d91723dc865763d
+    version: 0.1.0
+  key: 1.43.79|1.43.79|0.19.2|https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml|1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+  release:
+    boto3: 1.43.79
+    botocore: 1.43.79
+    id: ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2
+    role: ongoing-compatible-root-graph
+    s3transfer: 0.19.2
+latestUpstream:
+  boto3:
+    latestStable: 1.43.79
+    stableTagCount: 2103
+  botocore:
+    latestStable: 1.43.79
+    stableTagCount: 2493
+  s3transfer:
+    latestStable: 0.19.2
+    stableTagCount: 63
+observations:
+- classification: automatic
+  completedAt: '2026-08-25T13:08:24.243873Z'
+  evidence: evidence/aws-python/ongoing/baseline-1.43.70
+  extension:
+    id: https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml
+    semanticSha256: 1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+    serviceMappingSemanticSha256: 54a92a0dc07c238ac56b125ca74f5bdcafa2741a45afd2440d91723dc865763d
+    version: 0.1.0
+  key: 1.43.70|1.43.70|0.19.2|https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml|1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+  release:
+    boto3: 1.43.70
+    botocore: 1.43.70
+    id: baseline-1.43.70
+    role: accepted-baseline
+    s3transfer: 0.19.2
+- classification: automatic
+  completedAt: '2026-08-25T13:07:51.048946Z'
+  evidence: evidence/aws-python/ongoing/ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2
+  extension:
+    id: https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml
+    semanticSha256: 1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+    serviceMappingSemanticSha256: 54a92a0dc07c238ac56b125ca74f5bdcafa2741a45afd2440d91723dc865763d
+    version: 0.1.0
+  key: 1.43.79|1.43.79|0.19.2|https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml|1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+  release:
+    boto3: 1.43.79
+    botocore: 1.43.79
+    id: ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2
+    role: ongoing-compatible-root-graph
+    s3transfer: 0.19.2
+rootReleaseFloor: 1.43.79
+schemaVersion: 1

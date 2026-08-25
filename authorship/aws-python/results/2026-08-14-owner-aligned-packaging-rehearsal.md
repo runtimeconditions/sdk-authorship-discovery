@@ -63,7 +63,7 @@ three. The corrected overlay is now guarded by the same check.
 
 Installed-wheel discovery returned the same dependency order and reported:
 
-```json
+```yaml
 {
   "sdkModulesImported": {
     "boto3": false,

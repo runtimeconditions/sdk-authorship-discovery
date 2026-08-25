@@ -4,17 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
-
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
+from serialization import read_document, render_yaml
 
 
 def one(values: list[dict[str, Any]], description: str) -> dict[str, Any]:
@@ -42,9 +35,9 @@ def main() -> None:
     parser.add_argument("--s3transfer", type=Path, required=True)
     args = parser.parse_args()
 
-    boto3 = read_json(args.boto3)
-    botocore = read_json(args.botocore)
-    transfer = read_json(args.s3transfer)
+    boto3 = read_document(args.boto3)
+    botocore = read_document(args.botocore)
+    transfer = read_document(args.s3transfer)
 
     client_method = one(
         [item for item in botocore["python"]["client"]["methods"] if item["method"] == "put_object"],
@@ -150,7 +143,7 @@ def main() -> None:
             "executionPaths": upload_paths,
         },
     }
-    print(json.dumps(result, indent=2))
+    print(render_yaml(result), end="")
 
 
 if __name__ == "__main__":

@@ -5,24 +5,17 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import sys
 from importlib import metadata
 from pathlib import Path
 from typing import Any, Iterable
 
-
-API_VERSION = "runtimeconditions.io/v1alpha1"
-INDEX_KIND = "RuntimeConditionsSDKMappingIndexCandidate"
-MAPPING_KIND = "RuntimeConditionsSDKMappingCandidate"
+from serialization import read_document, render_yaml
 
 
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
+API_VERSION = "runtimeconditions.io/sdk-mapping/v1alpha1"
+INDEX_KIND = "RuntimeConditionsSDKMappingIndex"
+MAPPING_KIND = "RuntimeConditionsSDKMapping"
 
 
 def sha256(path: Path) -> str:
@@ -51,14 +44,14 @@ class Registry:
             return
         distribution = metadata.distribution(name)
         files = {str(path) for path in distribution.files or []}
-        index_candidates = sorted(path for path in files if path.endswith("/runtimeconditions/index.json"))
+        index_candidates = sorted(path for path in files if path.endswith("/runtimeconditions/index.yaml"))
         if len(index_candidates) != 1:
             raise ValueError(
-                f"{name} {distribution.version}: expected one runtimeconditions/index.json, "
+                f"{name} {distribution.version}: expected one runtimeconditions/index.yaml, "
                 f"found {len(index_candidates)}"
             )
         index_relative = index_candidates[0]
-        index = read_json(Path(distribution.locate_file(index_relative)))
+        index = read_document(Path(distribution.locate_file(index_relative)))
         if index.get("apiVersion") != API_VERSION or index.get("kind") != INDEX_KIND:
             raise ValueError(f"{index_relative}: unsupported SDK mapping index")
         index_metadata = index.get("metadata", {})
@@ -79,7 +72,7 @@ class Registry:
             path = Path(distribution.locate_file(relative))
             if sha256(path) != entry.get("sha256"):
                 raise ValueError(f"{relative}: mapping digest does not match index")
-            mapping = read_json(path)
+            mapping = read_document(path)
             if mapping.get("apiVersion") != API_VERSION or mapping.get("kind") != MAPPING_KIND:
                 raise ValueError(f"{relative}: unsupported SDK mapping")
             mapping_metadata = mapping.get("metadata", {})
@@ -196,7 +189,7 @@ def main() -> None:
             for distribution in sorted(registry.distributions)
         },
     }
-    print(json.dumps(output, indent=2))
+    print(render_yaml(output), end="")
 
 
 if __name__ == "__main__":

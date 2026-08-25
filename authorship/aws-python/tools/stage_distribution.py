@@ -5,30 +5,18 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import re
 import shutil
 from pathlib import Path
 from typing import Any
 
+from serialization import read_document, write_yaml
 
-API_VERSION = "runtimeconditions.io/v1alpha1"
-INDEX_KIND = "RuntimeConditionsSDKMappingIndexCandidate"
-MAPPING_KIND = "RuntimeConditionsSDKMappingCandidate"
+
+API_VERSION = "runtimeconditions.io/sdk-mapping/v1alpha1"
+INDEX_KIND = "RuntimeConditionsSDKMappingIndex"
+MAPPING_KIND = "RuntimeConditionsSDKMapping"
 VERSION_PATTERN = re.compile(r'''__version__\s*=\s*['"]([^'"]+)['"]''')
-
-
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
 def sha256(path: Path) -> str:
@@ -92,7 +80,7 @@ def main() -> None:
     identities: set[str] = set()
     for mapping_source, mapping_destination in args.mapping:
         mapping_source = mapping_source.resolve()
-        mapping = read_json(mapping_source)
+        mapping = read_document(mapping_source)
         identity = validate_mapping(mapping, args.distribution, version)
         if identity["name"] in identities:
             raise ValueError(f"duplicate mapping name: {identity['name']}")
@@ -119,7 +107,7 @@ def main() -> None:
         },
         "mappings": sorted(entries, key=lambda item: item["name"]),
     }
-    write_json(source / index_path, index)
+    write_yaml(source / index_path, index)
 
     print(f"distribution: {args.distribution} {version}")
     print(f"mappings: {len(entries)}")

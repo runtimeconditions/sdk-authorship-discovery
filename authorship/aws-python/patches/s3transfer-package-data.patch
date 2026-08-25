@@ -8,8 +8,8 @@ index 1b996e8..578c467 100644
      packages=find_packages(exclude=['tests*']),
 +    package_data={
 +        's3transfer': [
-+            'runtimeconditions/index.json',
-+            'runtimeconditions/mappings/*.json',
++            'runtimeconditions/index.yaml',
++            'runtimeconditions/mappings/*.yaml',
 +        ]
 +    },
      include_package_data=True,

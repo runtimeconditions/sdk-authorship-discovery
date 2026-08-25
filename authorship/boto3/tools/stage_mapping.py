@@ -5,27 +5,20 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import re
 import shutil
 from pathlib import Path
 from typing import Any
 
+from serialization import read_document, write_yaml
+
 
 API_VERSION = "runtimeconditions.io/v1alpha1"
 INDEX_KIND = "RuntimeConditionsSDKMappingIndexCandidate"
 MAPPING_KIND = "RuntimeConditionsSDKMappingCandidate"
-INDEX_PATH = Path("boto3/runtimeconditions/index.json")
+INDEX_PATH = Path("boto3/runtimeconditions/index.yaml")
 SERVICE_DIRECTORY = Path("boto3/runtimeconditions/services")
 VERSION_PATTERN = re.compile(r'''__version__ = ['"]([0-9.]+)['"]''')
-
-
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
 
 
 def sha256(path: Path) -> str:
@@ -87,11 +80,6 @@ def validate_mapping(mapping: dict[str, Any], version: str) -> tuple[str, str, i
     return service, extension["id"], len(factories), len(operations), len(resources)
 
 
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--boto3-source", type=Path, required=True)
@@ -101,10 +89,10 @@ def main() -> None:
     source = args.boto3_source.resolve()
     mapping_path = args.mapping.resolve()
     version = boto3_version(source)
-    mapping = read_json(mapping_path)
+    mapping = read_document(mapping_path)
     service, extension_id, factory_count, operation_count, resource_count = validate_mapping(mapping, version)
 
-    target = source / SERVICE_DIRECTORY / f"{service}.json"
+    target = source / SERVICE_DIRECTORY / f"{service}.yaml"
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(mapping_path, target)
     digest = sha256(target)
@@ -126,7 +114,7 @@ def main() -> None:
             }
         ],
     }
-    write_json(source / INDEX_PATH, index)
+    write_yaml(source / INDEX_PATH, index)
 
     condition_count = sum(
         len(operation.get("conditions", []))

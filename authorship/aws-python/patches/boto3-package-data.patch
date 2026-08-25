@@ -10,8 +10,8 @@ index b9324dd..65c3353 100644
 +        'boto3': [
 +            'data/aws/resources/*.json',
 +            'examples/*.rst',
-+            'runtimeconditions/index.json',
-+            'runtimeconditions/mappings/*.json',
++            'runtimeconditions/index.yaml',
++            'runtimeconditions/mappings/*.yaml',
 +        ]
 +    },
      include_package_data=True,

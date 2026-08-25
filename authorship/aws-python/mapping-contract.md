@@ -1,195 +1,155 @@
-# Candidate recursive SDK mapping contract
+# Recursive SDK mapping contract
 
-This document defines the behavior implemented by the S3 authorship proof. It
-is deliberately a candidate: validation and packaging are real, but the field
-names are not yet a cross-language specification commitment.
+This document records the contract implemented by the AWS SDK for Python authorship proof. The implementation is real and validated, while cross-language standardization remains future work.
+
+## Serialization
+
+Every Runtime Conditions-owned SDK mapping, distribution index, generator manifest, maintenance state, and evidence document is serialized as YAML with a `.yaml` suffix. First-party tools may parse JSON only when an authoritative upstream SDK or service model is published in JSON; that input boundary does not permit Runtime Conditions tooling to emit JSON. JSON Schema remains the schema vocabulary embedded in extension definitions and is independent of artifact serialization.
 
 ## Distribution index
 
-Every owning Python distribution packages exactly one index at a path ending
-in `runtimeconditions/index.json`.
+Every owning Python distribution packages one index at a path ending in `runtimeconditions/index.yaml`.
 
-```json
-{
-  "apiVersion": "runtimeconditions.io/v1alpha1",
-  "kind": "RuntimeConditionsSDKMappingIndexCandidate",
-  "metadata": {
-    "distribution": "boto3",
-    "distributionVersion": "1.43.70",
-    "language": "python"
-  },
-  "mappings": [
-    {
-      "name": "boto3.aws.s3",
-      "service": "s3",
-      "path": "boto3/runtimeconditions/mappings/aws-s3.json",
-      "sha256": "..."
-    }
-  ]
-}
+```yaml
+apiVersion: runtimeconditions.io/sdk-mapping/v1alpha1
+kind: RuntimeConditionsSDKMappingIndex
+metadata:
+  distribution: boto3
+  distributionVersion: 1.43.70
+  language: python
+mappings:
+  - name: boto3.aws.s3
+    service: s3
+    path: boto3/runtimeconditions/mappings/aws-s3.yaml
+    sha256: ...
 ```
 
-A consumer finds the index through installed-distribution metadata, not by
-importing the package. The index version and every indexed mapping version must
-equal the installed distribution version. The digest protects index-to-mapping
-integrity; it is not an application dependency lock.
+A consumer finds this index through installed-distribution metadata rather than importing the package. The index version and every indexed mapping version must equal the installed distribution version. The digest protects index-to-mapping integrity; it is not an application compatibility lock.
 
-## Mapping identity and dependencies
+## Mapping identity
 
-Every mapping has an owner-qualified identity:
+Every mapping has an owner-qualified identity and uses the SDK mapping API independently of the profile or extension document API:
 
-```json
-{
-  "metadata": {
-    "name": "boto3.aws.s3",
-    "distribution": "boto3",
-    "distributionVersion": "1.43.70",
-    "language": "python",
-    "service": "s3"
-  },
-  "dependencies": [
-    {
-      "kind": "sdkMapping",
-      "distribution": "botocore",
-      "mapping": "botocore.aws.s3"
-    }
-  ]
-}
+```yaml
+apiVersion: runtimeconditions.io/sdk-mapping/v1alpha1
+kind: RuntimeConditionsSDKMapping
+metadata:
+  name: boto3.aws.s3
+  distribution: boto3
+  distributionVersion: 1.43.70
+  language: python
+  service: s3
 ```
 
-An extension dependency uses `kind: extension` and an extension identifier.
-SDK mapping dependencies form a directed acyclic graph. A cross-owner reference
-must also be declared as a dependency.
+`apiVersion` versions the mapping document schema. `metadata.distributionVersion` identifies the exact SDK artifact that owns its public bindings. Neither is the semantic version of an extension.
 
-No compatible version range appears in this graph. The dependency resolver
-selects installed package versions through ordinary application declarations;
-the consumer then requires the selected packages to supply self-versioned
-mappings.
+## Dependencies
 
-The mapping graph is not a copy of the complete software dependency graph. A
-package becomes a mapping dependency when its owned public behavior contributes
-another service/resource semantic step or Runtime Condition. Generic transport,
-serialization, retry, and utility packages do not become nodes merely because
-they execute at runtime. In the CRT transfer path, s3transfer owns the selected
-S3 behavior and awscrt transports it, so the semantic reference terminates at
-the botocore S3 operation.
+An SDK mapping dependency names another owner-qualified mapping:
+
+```yaml
+kind: sdkMapping
+distribution: botocore
+mapping: botocore.aws.s3
+```
+
+A terminal service mapping uses an extension dependency to select one immutable semantic release and includes all three verification coordinates:
+
+```yaml
+kind: extension
+id: https://runtimeconditions.io/extensions/aws-s3/0.1.0/runtimeconditions.extension.yaml
+version: 0.1.0
+semanticSha256: 1a505b63d55893c26f3ffe6cf3cd9f90f0b5bd7975fabe47ff444a3ed1e13c72
+```
+
+The ID is immutable, the version expresses the extension maintainer's semantic release, and the digest prevents content substitution. Many SDK distributions and releases may target the same extension release. A terminal SDK mapping must be regenerated or rejected if it claims a different extension identity or digest than the language-neutral service mapping it consumes; higher-level mappings inherit that terminal contract through owner-qualified dependencies.
+
+SDK mapping dependencies form a directed acyclic graph. A cross-owner reference must also be declared as a dependency. The graph does not repeat the complete software dependency graph: transport, serialization, retry, and utility packages become mapping nodes only when their owned public behavior introduces a meaningful external-resource semantic step or another Runtime Condition.
+
+No SDK compatibility range appears in this graph. Ordinary package dependency resolution selects the installed SDK versions; discovery then requires each selected package to supply metadata for its exact installed version.
 
 ## Typed references
 
-The proof uses three reference types:
+The proof uses three owner-qualified reference types:
 
-```json
-{"operationRef": {"distribution": "botocore", "mapping": "botocore.aws.s3", "operation": "PutObject"}}
-{"waiterRef": {"distribution": "botocore", "mapping": "botocore.aws.s3", "waiter": "bucket_exists"}}
-{"callRef": {"distribution": "s3transfer", "mapping": "s3transfer.aws.s3", "call": "managed-upload"}}
+```yaml
+operationRef:
+  distribution: botocore
+  mapping: botocore.aws.s3
+  operation: PutObject
+---
+waiterRef:
+  distribution: botocore
+  mapping: botocore.aws.s3
+  waiter: bucket_exists
+---
+callRef:
+  distribution: s3transfer
+  mapping: s3transfer.aws.s3
+  call: managed-upload
 ```
 
-Consumers resolve the declared distribution and mapping before member lookup.
-Names are not global and are never resolved by best match.
+Consumers resolve the declared distribution and mapping before member lookup. Names are not global and are never resolved by best match.
+
+## Canonical operations and SDK aliases
+
+The language-neutral service mapping owns one template set per canonical operation in the selected extension release. A language SDK mapping binds its public members to that canonical set.
+
+An SDK may expose compatibility names absent from the authoritative service model. Those names are explicit SDK annotations and resolve to a canonical operation; they do not add extension vocabulary. In the current proof, 116 botocore client methods resolve to 112 canonical S3 operations through four aliases.
 
 ## Public construction and call surfaces
 
-Factory mappings contain every public symbol or alias the owning SDK exposes, a
-positional and keyword selector, the accepted service value, and the produced
-surface. Resource mappings retain identifiers, actions, relations, collections,
-waiters, returned resources, and argument/identifier propagation.
+Factory mappings contain every public symbol or alias the owning SDK exposes, positional and keyword selectors, accepted service values, and produced surfaces. Resource mappings retain identifiers, actions, relations, collections, waiters, returned resources, and argument propagation.
 
-Handwritten wrapper bindings normalize their public arguments before referring
-to an underlying logical call:
+Handwritten wrapper bindings normalize their public arguments before referring to an underlying logical call:
 
-```json
-{
-  "method": "upload_file",
-  "receiverArguments": {"bucket": "Name"},
-  "arguments": {
-    "fileobj": {"position": 0, "keyword": "Filename"},
-    "key": {"position": 1, "keyword": "Key"}
-  },
-  "callRef": {
-    "distribution": "s3transfer",
-    "mapping": "s3transfer.aws.s3",
-    "call": "managed-upload"
-  }
-}
+```yaml
+method: upload_file
+receiverArguments:
+  bucket: Name
+arguments:
+  fileobj:
+    position: 0
+    keyword: Filename
+  key:
+    position: 1
+    keyword: Key
+callRef:
+  distribution: s3transfer
+  mapping: s3transfer.aws.s3
+  call: managed-upload
 ```
 
-Positions exclude the receiver (`self`). Both positional and keyword forms are
-recorded because application source can use either. Source validation rejects a
-binding when the owning function signature changes.
+Positions exclude the receiver. Both positional and keyword forms are recorded because application source can use either. Source validation rejects a binding when its owning signature changes.
 
-When behavior depends on state supplied during object construction, a method
-binding includes `receiverContext` with the constructor symbol and argument
-binding. This is how transfer `config` remains available for classic/CRT and
-multipart path reasoning even when the public transfer method receives no
-`config` parameter. The generator rejects a wrapper or entrypoint that binds a
-logical argument absent from its referenced call.
+When behavior depends on state supplied during object construction, a method binding includes `receiverContext` with its constructor symbol and argument binding. This retains transfer configuration for classic, CRT, and multipart reasoning even when a later public method receives no configuration parameter. The generator rejects a wrapper or entrypoint that binds a logical argument absent from its referenced call.
 
 ## Execution paths and predicates
 
-A logical call may have multiple implementations and mutually exclusive paths:
+A logical call may have multiple implementations and mutually exclusive paths. `selection` is a human-reviewable semantic description, not an instruction for a profiler to guess a branch. `when` and `whenAll` preserve predicates on optional follow-up calls. `usage` distinguishes always-on-path, one-or-more, zero-or-more, and failure-recovery calls.
 
-```json
-{
-  "name": "classic",
-  "selection": "classic transfer manager selected by configuration and environment",
-  "executionPaths": [
-    {
-      "name": "single-part",
-      "selection": "transfer manager chooses a single request",
-      "operationRefs": []
-    },
-    {
-      "name": "multipart-success",
-      "selection": "transfer manager chooses multipart and completes successfully",
-      "operationRefs": []
-    }
-  ]
-}
-```
-
-`selection` is a human-reviewable semantic description in this first proof,
-not an instruction to guess a branch. `when` and `whenAll` preserve predicates
-on optional follow-up calls. `usage` distinguishes always-on-path, one-or-more,
-zero-or-more, and failure-recovery calls.
-
-These are behavioral facts about the SDK. They are not emitted profile fields,
-coverage metrics, or unresolved observations. If static application analysis
-cannot select a path or prove a predicate, the profiler and its caller decide
-whether to omit, widen, warn, request a no-op declaration, or apply another
-organization policy.
+These are behavioral facts about the SDK. They are not emitted profile fields, coverage metrics, or unresolved observations. If static analysis cannot select a path or prove a predicate, the profiler and its caller decide whether to omit, widen, warn, request a no-op declaration, or apply another policy.
 
 ## Extension boundary
 
-Only the botocore service mapping defines S3 Condition templates. Higher-level
-mappings reference canonical operations and cannot invent extension fields.
+Only the language-neutral botocore service mapping defines S3 Condition templates. Higher-level mappings reference canonical operations and cannot invent extension fields.
 
 For `PutObject`, the terminal template is:
 
-```json
-{
-  "kind": "aws.s3",
-  "interfaceType": "bucket",
-  "identity": {"source": "input", "path": "Bucket"},
-  "operation": {"name": "PutObject"}
-}
+```yaml
+kind: aws.s3
+interfaceType: bucket
+identity:
+  source: input
+  path: Bucket
+operation:
+  name: PutObject
 ```
 
-This is an S3 API operation, not an IAM action declaration. Authentication,
-environment variables, provisioning policy, and downstream failure behavior
-remain outside the SDK mapping unless an extension explicitly defines relevant
-vocabulary and application source proves it.
+This describes an S3 API operation, not an IAM action declaration. Authentication, environment variables, provisioning policy, and downstream incomplete-detection behavior remain outside the SDK mapping unless extension vocabulary defines them and application source proves them.
 
 ## Required consumer failures
 
-The implemented verifier fails closed for malformed mapping metadata:
+The verifier fails closed for absent indexes or mappings; digest, distribution, or exact SDK version mismatches; duplicate mapping identities; absent or cyclic dependencies; undeclared cross-mapping references; missing referenced operations, waiters, or calls; noncanonical operation aliases; extension identity, version, or semantic-digest mismatch; and operation-to-Condition inconsistency.
 
-- absent index or indexed mapping;
-- digest, distribution, or exact version mismatch;
-- duplicate mapping identity;
-- absent or cyclic dependency;
-- undeclared cross-mapping reference;
-- missing referenced operation, waiter, or call;
-- canonical operation/Condition mismatch.
-
-Those are metadata integrity errors. They are distinct from incomplete
-application detection, whose policy remains outside the mapping layer.
+Those are metadata integrity errors. They are distinct from incomplete application detection, whose policy remains outside the mapping layer.

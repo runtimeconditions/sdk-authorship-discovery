@@ -6,17 +6,10 @@ from __future__ import annotations
 import argparse
 import importlib
 import inspect
-import json
 from pathlib import Path
 from typing import Any
 
-
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
+from serialization import read_document
 
 
 class OptionalDependencyMissing(Exception):
@@ -60,9 +53,9 @@ def main() -> None:
     parser.add_argument("--s3transfer", type=Path, required=True)
     args = parser.parse_args()
 
-    boto3_mapping = read_json(args.boto3)
-    botocore_mapping = read_json(args.botocore)
-    transfer_mapping = read_json(args.s3transfer)
+    boto3_mapping = read_document(args.boto3)
+    botocore_mapping = read_document(args.botocore)
+    transfer_mapping = read_document(args.s3transfer)
 
     import boto3
 

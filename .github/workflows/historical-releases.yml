@@ -1,0 +1,107 @@
+name: Historical SDK mapping maintenance
+
+on:
+  workflow_dispatch:
+    inputs:
+      extensions_ref:
+        description: Immutable runtimeconditions/extensions commit or review ref
+        required: true
+        default: main
+        type: string
+      releases:
+        description: Optional comma-separated release IDs from experiment.yaml; blank runs all configured releases
+        required: false
+        type: string
+      validation_level:
+        description: Run static gates only or the full package and application proof
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - static
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out SDK authorship experiment
+        uses: actions/checkout@v6
+        with:
+          path: sdk
+
+      - name: Check out extension semantics
+        uses: actions/checkout@v6
+        with:
+          repository: runtimeconditions/extensions
+          ref: ${{ inputs.extensions_ref }}
+          path: extensions
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install build and runtime prerequisites
+        run: python -m pip install --disable-pip-version-check -r sdk/authorship/aws-python/requirements.txt
+
+      - name: Select configured releases
+        id: selection
+        shell: bash
+        env:
+          RELEASES: ${{ inputs.releases }}
+          VALIDATION_LEVEL: ${{ inputs.validation_level }}
+        run: |
+          arguments=()
+          if [[ -n "$RELEASES" ]]; then
+            IFS=',' read -ra release_ids <<< "$RELEASES"
+            for release_id in "${release_ids[@]}"; do
+              trimmed="${release_id//[[:space:]]/}"
+              if [[ -n "$trimmed" ]]; then
+                arguments+=(--release "$trimmed")
+              fi
+            done
+          fi
+          if [[ "$VALIDATION_LEVEL" == "static" ]]; then
+            arguments+=(--static-only)
+          fi
+          : > "$RUNNER_TEMP/replay-arguments"
+          if (( ${#arguments[@]} )); then
+            printf '%s\0' "${arguments[@]}" > "$RUNNER_TEMP/replay-arguments"
+          fi
+
+      - name: Replay historical releases
+        id: replay
+        continue-on-error: true
+        shell: bash
+        run: |
+          mapfile -d '' arguments < "$RUNNER_TEMP/replay-arguments"
+          python sdk/authorship/aws-python/tools/replay_releases.py \
+            --experiment sdk/maintenance/aws-python-s3/experiment.yaml \
+            --extensions-root extensions \
+            --source-cache "$RUNNER_TEMP/upstream-source-cache" \
+            --work-root "$RUNNER_TEMP/maintenance-work" \
+            --output maintenance-evidence \
+            "${arguments[@]}"
+
+      - name: Upload maintenance evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aws-python-historical-maintenance-${{ github.run_id }}
+          path: maintenance-evidence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish maintenance summary
+        if: always() && hashFiles('maintenance-evidence/summary.md') != ''
+        run: cat maintenance-evidence/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce maintenance classification
+        if: steps.replay.outcome == 'failure'
+        run: exit 1
