@@ -17,9 +17,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from serialization import read_document, write_yaml
+
 
 EXIT_INVALID = 1
 EXIT_REVIEW_REQUIRED = 2
+REVIEW_CLASSIFICATIONS = {"extension-review-required", "sdk-review-required"}
 VERSION_PATTERN = re.compile(r'''__version__\s*=\s*['"]([^'"]+)['"]''')
 MAPPING_NAMES = {
     "boto3": "boto3.aws.s3",
@@ -37,25 +40,12 @@ class StageFailure(RuntimeError):
         self.diagnostics = diagnostics
 
 
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def semantic_sha256(path: Path) -> str:
-    value = copy.deepcopy(read_json(path))
+    value = copy.deepcopy(read_document(path))
     metadata = value.get("metadata")
     if isinstance(metadata, dict):
         metadata.pop("distributionVersion", None)
@@ -230,7 +220,7 @@ def prepare_source(
 
 
 def mapping_inventory(path: Path) -> dict[str, int]:
-    mapping = read_json(path)
+    mapping = read_document(path)
     python = mapping.get("python", {})
     resources = python.get("resources", [])
     calls = python.get("calls", [])
@@ -280,8 +270,10 @@ def render_report(result: dict[str, Any]) -> str:
     ]
     if result["classification"] == "automatic":
         lines.append("The accepted semantic inputs regenerated and passed every requested gate without a handwritten mapping change.")
-    elif result["classification"] == "review-required":
-        lines.append("The release reached a change that may affect SDK mapping meaning or package integration. A maintainer must review the focused reason below; the runner did not edit or approve semantic inputs.")
+    elif result["classification"] == "extension-review-required":
+        lines.append("The SDK release cannot be aligned safely to the selected extension release. Extension stakeholders must review the focused API-semantic difference before SDK mapping acceptance continues.")
+    elif result["classification"] == "sdk-review-required":
+        lines.append("The extension remains sufficient, but an SDK-owned surface or package integration changed. An SDK mapping maintainer must review the focused reason below.")
     else:
         lines.append("The experiment could not classify the release safely. This is an automation or unsupported-input failure, not an accepted mapping update.")
 
@@ -374,18 +366,26 @@ def render_report(result: dict[str, Any]) -> str:
 def finalize(result: dict[str, Any], output: Path) -> None:
     result["completedAt"] = utc_now()
     output.mkdir(parents=True, exist_ok=True)
-    write_json(output / "run.json", result)
+    write_yaml(output / "run.yaml", result)
     (output / "report.md").write_text(render_report(result), encoding="utf-8")
 
 
 def run(args: argparse.Namespace) -> int:
     sdk_root = Path(__file__).resolve().parents[3]
     experiment_path = args.experiment.resolve()
-    experiment = read_json(experiment_path)
+    experiment = read_document(experiment_path)
     releases = {item["id"]: item for item in experiment.get("releases", [])}
-    if args.release not in releases:
-        raise ValueError(f"unknown release id {args.release!r}; choose from {', '.join(sorted(releases))}")
-    release = releases[args.release]
+    if args.release_file:
+        release_document = read_document(args.release_file.resolve())
+        release = release_document.get("release", release_document)
+        required_release_fields = {"id", "boto3", "botocore", "s3transfer"}
+        missing_release_fields = sorted(required_release_fields - set(release))
+        if missing_release_fields:
+            raise ValueError(f"release file is missing fields: {', '.join(missing_release_fields)}")
+    else:
+        if args.release not in releases:
+            raise ValueError(f"unknown release id {args.release!r}; choose from {', '.join(sorted(releases))}")
+        release = releases[args.release]
     output = args.output.resolve()
     if output.exists():
         raise ValueError(f"output directory already exists: {output}")
@@ -394,7 +394,7 @@ def run(args: argparse.Namespace) -> int:
     if not extension_root.is_dir():
         raise ValueError(f"extension source does not exist: {extension_root}")
     source_cache = args.source_cache.resolve()
-    run_work = args.work_root.resolve() / args.release
+    run_work = args.work_root.resolve() / release["id"]
     checkout_root = run_work / "sources"
     if run_work.exists():
         raise ValueError(f"maintenance work directory already exists: {run_work}")
@@ -472,33 +472,33 @@ def run(args: argparse.Namespace) -> int:
 
         mappings_dir = output / "artifacts" / "mappings"
         mappings_dir.mkdir(parents=True)
-        service_mapping = mappings_dir / "s3-service-mapping.json"
+        service_mapping = extension_root / "model/generated/s3-service-mapping.yaml"
         mapping_paths = {
-            "botocore": mappings_dir / "botocore.aws.s3.json",
-            "s3transfer": mappings_dir / "s3transfer.aws.s3.json",
-            "boto3": mappings_dir / "boto3.aws.s3.json",
+            "botocore": mappings_dir / "botocore.aws.s3.yaml",
+            "s3transfer": mappings_dir / "s3transfer.aws.s3.yaml",
+            "boto3": mappings_dir / "boto3.aws.s3.yaml",
         }
         service_models = sources["botocore"] / "botocore/data/s3/2006-03-01"
         resource_model = sources["boto3"] / "boto3/data/s3/2006-03-01/resources-1.json"
-        semantic_annotations = extension_root / "model/semantic-annotations.json"
-        boto3_annotations = extension_root / "model/boto3-wrapper-annotations.json"
-        transfer_annotations = extension_root / "model/s3transfer-semantic-annotations.json"
+        botocore_annotations = extension_root / "model/botocore-sdk-annotations.yaml"
+        boto3_annotations = extension_root / "model/boto3-wrapper-annotations.yaml"
+        transfer_annotations = extension_root / "model/s3transfer-semantic-annotations.yaml"
 
         execute(
             result,
-            "generate-service-mapping",
+            "validate-extension-alignment",
             [
                 sys.executable,
-                str(extension_root / "tools/generate_mappings.py"),
-                "--service-model",
-                str(service_models / "service-2.json"),
-                "--annotations",
-                str(semantic_annotations),
-                "--service-output",
+                str(extension_root / "tools/validate_extension_alignment.py"),
+                "--service-mapping",
                 str(service_mapping),
+                "--botocore-service-model",
+                str(service_models / "service-2.json"),
+                "--botocore-annotations",
+                str(botocore_annotations),
             ],
-            failure_classification="review-required",
-            failure_reason="service-semantic-drift",
+            failure_classification="extension-review-required",
+            failure_reason="extension-semantic-alignment-drift",
         )
         execute(
             result,
@@ -508,12 +508,16 @@ def run(args: argparse.Namespace) -> int:
                 str(extension_root / "tools/generate_owner_mappings.py"),
                 "--service-mapping",
                 str(service_mapping),
+                "--botocore-service-model",
+                str(service_models / "service-2.json"),
                 "--paginator-model",
                 str(service_models / "paginators-1.json"),
                 "--waiter-model",
                 str(service_models / "waiters-2.json"),
                 "--resource-model",
                 str(resource_model),
+                "--botocore-annotations",
+                str(botocore_annotations),
                 "--boto3-wrappers",
                 str(boto3_annotations),
                 "--s3transfer-annotations",
@@ -531,7 +535,7 @@ def run(args: argparse.Namespace) -> int:
                 "--s3transfer-version",
                 versions["s3transfer"],
             ],
-            failure_classification="review-required",
+            failure_classification="sdk-review-required",
             failure_reason="owner-surface-drift",
         )
         execute(
@@ -550,6 +554,8 @@ def run(args: argparse.Namespace) -> int:
                 "boto3",
                 "--root-mapping",
                 "boto3.aws.s3",
+                "--service-mapping",
+                str(service_mapping),
             ],
             failure_reason="generated-reference-contract-failure",
         )
@@ -565,6 +571,8 @@ def run(args: argparse.Namespace) -> int:
                 str(sources["botocore"]),
                 "--s3transfer-source",
                 str(sources["s3transfer"]),
+                "--botocore-annotations",
+                str(botocore_annotations),
                 "--boto3-annotations",
                 str(boto3_annotations),
                 "--s3transfer-annotations",
@@ -576,7 +584,7 @@ def run(args: argparse.Namespace) -> int:
                 "--s3transfer-mapping",
                 str(mapping_paths["s3transfer"]),
             ],
-            failure_classification="review-required",
+            failure_classification="sdk-review-required",
             failure_reason="reviewed-sdk-surface-drift",
         )
         execute(
@@ -596,7 +604,7 @@ def run(args: argparse.Namespace) -> int:
         )
 
         for package, path in mapping_paths.items():
-            baseline = extension_root / f"mappings/{package}/runtimeconditions.sdk-mapping.json"
+            baseline = extension_root / f"mappings/{package}/runtimeconditions.sdk-mapping.yaml"
             result["artifacts"]["mappings"][package] = artifact_record(path, baseline)
 
         if not args.static_only:
@@ -608,7 +616,7 @@ def run(args: argparse.Namespace) -> int:
                     result,
                     f"apply-{package}-package-data",
                     ["git", "-C", str(sources[package]), "apply", str(sdk_root / package_config["packageDataPatch"])],
-                    failure_classification="review-required",
+                    failure_classification="sdk-review-required",
                     failure_reason="package-build-integration-drift",
                 )
                 execute(
@@ -635,7 +643,7 @@ def run(args: argparse.Namespace) -> int:
                     f"build-{package}-wheel",
                     [sys.executable, "setup.py", "bdist_wheel", "--dist-dir", str(wheels_dir)],
                     cwd=sources[package],
-                    failure_classification="review-required",
+                    failure_classification="sdk-review-required",
                     failure_reason="package-build-integration-drift",
                 )
 
@@ -691,7 +699,7 @@ def run(args: argparse.Namespace) -> int:
                     str(mapping_paths["s3transfer"]),
                 ],
                 env=verification_env,
-                failure_classification="review-required",
+                failure_classification="sdk-review-required",
                 failure_reason="installed-sdk-surface-drift",
             )
             execute(
@@ -722,7 +730,7 @@ def run(args: argparse.Namespace) -> int:
                     f"test-application-{project.name}",
                     [sys.executable, "-m", "unittest", "discover", "-s", str(project / "tests")],
                     env=test_env,
-                    failure_classification="review-required",
+                    failure_classification="sdk-review-required",
                     failure_reason="application-regression",
                 )
 
@@ -734,7 +742,7 @@ def run(args: argparse.Namespace) -> int:
             "reason": error.reason,
             "diagnostics": error.diagnostics,
         }
-        if error.classification == "review-required":
+        if error.classification in REVIEW_CLASSIFICATIONS:
             result["manualReview"]["requested"] = True
             result["manualReview"]["reasonCodes"].append(error.reason)
     except Exception as error:  # Preserve evidence for unexpected automation failures.
@@ -749,10 +757,10 @@ def run(args: argparse.Namespace) -> int:
 
     print(f"classification: {result['classification']}")
     print(f"report: {output / 'report.md'}")
-    print(f"machine result: {output / 'run.json'}")
+    print(f"machine result: {output / 'run.yaml'}")
     if result["classification"] == "automatic":
         return 0
-    if result["classification"] == "review-required":
+    if result["classification"] in REVIEW_CLASSIFICATIONS:
         return EXIT_REVIEW_REQUIRED
     return EXIT_INVALID
 
@@ -760,7 +768,9 @@ def run(args: argparse.Namespace) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", type=Path, required=True)
-    parser.add_argument("--release", required=True)
+    release = parser.add_mutually_exclusive_group(required=True)
+    release.add_argument("--release")
+    release.add_argument("--release-file", type=Path)
     parser.add_argument("--extensions-root", type=Path, required=True)
     parser.add_argument("--source", type=source_override, action="append", default=[])
     parser.add_argument("--source-cache", type=Path, default=Path(".work/maintenance-source-cache"))

@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import argparse
 import ast
-import json
 import re
 from pathlib import Path
 from typing import Any
 
 from packaging.requirements import Requirement
+from serialization import render_yaml
 
 
 VERSION_PATTERN = re.compile(r'''__version__\s*=\s*['"]([^'"]+)['"]''')
@@ -80,7 +80,7 @@ def main() -> None:
         owner_requirements[package] = relevant
 
     print("source-declared SDK release compatibility passed")
-    print(json.dumps({"versions": versions, "ownerRequirements": owner_requirements}, indent=2, sort_keys=True))
+    print(render_yaml({"versions": versions, "ownerRequirements": owner_requirements}), end="")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,8 @@
 
 The first historical sample processed ten consecutive boto3/botocore releases, 1.43.61 through 1.43.70, against the accepted owner-aligned mapping inputs. All ten static release runs were classified `automatic`: no semantic overlay changed, no human SDK-mapping review was requested, every release tuple satisfied the SDKs' declared dependency ranges, every source/model/reference gate passed, and every generated mapping had the same semantic digest as the accepted baseline after removing generated distribution-version identity.
 
+On 2026-08-25 all ten static tuples were re-run after service authority moved from botocore's bundled model to AWS's public Smithy model, immutable extension release `0.1.0`, SDK compatibility aliases, and exact extension/service-mapping digest validation. All ten remained `automatic`. This confirms that the historical maintenance conclusion survives the corrected extension-to-SDK architecture rather than depending on the earlier botocore-derived service vocabulary.
+
 Full package verification was also run at 1.43.61, 1.43.69, and 1.43.70. All three package runs patched only the static package-data declarations, staged version-aligned mappings, built local boto3/botocore/s3transfer wheels, discovered their mappings without SDK imports, validated installed runtime surfaces and the selected dependency closure, and passed all seven application fixtures.
 
 ## Static release sample
@@ -50,10 +52,10 @@ The runs occurred while the SDK and extensions working trees contained the autom
 
 ## Next experiment expansion
 
-1. Run the ten-release static sample from GitHub Actions using clean SDK and extension commits.
-2. Run the full package proof for the oldest release and baseline from GitHub Actions.
-3. Expand backward until the history crosses a real S3 operation-set, boto3 wrapper/resource, or s3transfer behavior change.
+1. Run the revalidated ten-release sample from GitHub Actions using clean SDK and extension commits.
+2. Let the scheduled ongoing observer accumulate new compatible package graphs.
+3. Add an owner-isolated lane for botocore or s3transfer releases that cannot participate in a valid boto3-rooted graph.
 4. Add release tuples spanning at least one s3transfer version transition.
-5. Record human review time only when a real release produces `review-required`.
+5. Record human review time only when a real release produces `extension-review-required` or `sdk-review-required`.
 
 The initial result is encouraging but not sufficient for an adoption claim: ten routine releases required zero authored maintenance, while the next sample must test whether the first genuine interruption is precise and tolerable.

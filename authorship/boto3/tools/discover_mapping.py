@@ -5,24 +5,17 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import sys
 from importlib import metadata
 from pathlib import Path
 from typing import Any
 
+from serialization import read_document, render_yaml
+
 
 API_VERSION = "runtimeconditions.io/v1alpha1"
 INDEX_KIND = "RuntimeConditionsSDKMappingIndexCandidate"
-INDEX_PATH = "boto3/runtimeconditions/index.json"
-
-
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
+INDEX_PATH = "boto3/runtimeconditions/index.yaml"
 
 
 def sha256(path: Path) -> str:
@@ -40,7 +33,7 @@ def main() -> None:
         raise ValueError(f"{args.distribution} {distribution.version} does not contain {INDEX_PATH}")
 
     index_path = Path(distribution.locate_file(INDEX_PATH))
-    index = read_json(index_path)
+    index = read_document(index_path)
     if index.get("apiVersion") != API_VERSION or index.get("kind") != INDEX_KIND:
         raise ValueError(f"{index_path}: unsupported Runtime Conditions index")
 
@@ -59,7 +52,7 @@ def main() -> None:
         actual_digest = sha256(mapping_path)
         if actual_digest != entry.get("sha256"):
             raise ValueError(f"{mapping_relative}: mapping digest does not match index")
-        mapping = read_json(mapping_path)
+        mapping = read_document(mapping_path)
         results.append(
             {
                 "service": entry.get("service"),
@@ -78,7 +71,7 @@ def main() -> None:
         "sdkImported": args.distribution in sys.modules,
         "mappings": results,
     }
-    print(json.dumps(output, indent=2))
+    print(render_yaml(output), end="")
 
 
 if __name__ == "__main__":

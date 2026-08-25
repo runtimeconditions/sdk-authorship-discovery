@@ -1,22 +1,14 @@
-# Runtime Conditions SDK Mapping Corpus
+# Runtime Conditions SDK mapping corpus
 
-This directory contains real, independently runnable applications for investigating how Runtime Conditions profilers should recognize external-resource requirements expressed through SDK usage.
+This repository contains independently runnable applications, an owner-aligned SDK authorship proof, and historical and ongoing maintenance experiments for external-resource requirements expressed through SDK usage.
 
-It is a compatibility corpus, not an implementation of an SDK mapping architecture. In particular, nothing here treats the existing `RuntimeConditionsPackage` manifest or current Go SDK extraction behavior as stable.
+Existing Runtime Conditions package-manifest conventions and profiler behavior are not treated as stable foundations. The current mapping architecture is the result of this corpus and remains subject to SDK-maintainer review before cross-language standardization or profiler adoption.
 
-## Current scope
+## Application corpus
 
-The first slice uses the published AWS SDK for Python (`boto3==1.43.70`) and the S3 `PutObject` operation. Keeping the service and language fixed lets us compare source patterns without conflating them with different SDK generation systems or language semantics.
+The first slice uses the real AWS SDK for Python and S3. Keeping the service and language fixed lets the investigation compare source patterns without conflating them with unrelated service semantics or language-generation systems.
 
-All projects:
-
-- use the real boto3 package;
-- can upload an object to a real S3 bucket when run with ordinary AWS credentials;
-- have tests that exercise the real botocore operation model without making network requests;
-- contain no Runtime Conditions annotations, manifests, or declarations;
-- are standalone Python projects with their own package metadata.
-
-## Projects
+Every project uses ordinary boto3 code, can perform a real S3 request with normal AWS credentials, has tests that exercise real SDK models without network calls, contains no Runtime Conditions declarations, and builds independently.
 
 | Project | SDK pattern | Static expectation | Mapping question |
 | --- | --- | --- | --- |
@@ -25,14 +17,14 @@ All projects:
 | `factory-wrapper` | Application factory returns an S3 client | Resolvable | Can effects flow through ordinary application wrappers? |
 | `dependency-injection` | Composition root injects an S3 client behind a protocol | Resolvable | Can client identity survive abstraction and injection? |
 | `resource-api` | `boto3.resource("s3").Bucket(...).put_object` | Resolvable | Can one service expose multiple public SDK models? |
-| `dynamic-service` | Runtime service name passed to `boto3.client` | Unresolved service identity | How should honest ambiguity be reported and remediated? |
-| `managed-transfer` | `boto3.client("s3").upload_file(...)` crosses into s3transfer | Resolvable through nested mappings | How are wrapper ownership, receiver configuration, and mutually exclusive transfer paths preserved? |
+| `dynamic-service` | Runtime service name passed to `boto3.client` | Not statically proven | What application fallback is usable without inventing a dependency? |
+| `managed-transfer` | `boto3.client("s3").upload_file(...)` crosses into s3transfer | Resolvable through nested mappings | How are wrapper ownership, receiver configuration, and mutually exclusive execution paths preserved? |
 
-“Resolvable” is an investigation target, not a claim that the current Python profiler supports the case. “Unresolved” must eventually produce an actionable diagnostic; it must not be silently guessed or silently treated as successful coverage.
+“Resolvable” is an investigation target rather than a claim that the current Python profiler supports package mappings. Handling incomplete application detection remains a profiler, developer, organization, and downstream-policy decision; the SDK mapping layer does not publish coverage or unresolved observations.
 
-## Set up and test
+## Set up and test the applications
 
-Use Python 3.10 or newer. From this directory:
+Use Python 3.10 or newer:
 
 ```sh
 python3 -m venv .venv
@@ -47,7 +39,7 @@ python -m pip install \
   -e ./s3/python/managed-transfer
 ```
 
-Run each project's tests independently:
+Run each test suite independently:
 
 ```sh
 python -m unittest discover -s s3/python/direct-client/tests
@@ -59,38 +51,28 @@ python -m unittest discover -s s3/python/dynamic-service/tests
 python -m unittest discover -s s3/python/managed-transfer/tests
 ```
 
-Each installed project also exposes a small upload command. For example:
+Installed projects also expose small real-upload commands. Those commands intentionally use boto3's normal credential chain; the tests do not make network requests.
 
-```sh
-s3-direct-upload my-bucket path/to/key ./local-file
-```
+## SDK authorship proof
 
-The commands intentionally use boto3's normal credential chain and perform a real S3 request. The tests do neither.
+[`authorship/aws-python`](authorship/aws-python/) packages owner-aligned botocore, s3transfer, and boto3 mappings into locally installed wheels, discovers them recursively without SDK imports, validates their exact relationship to an immutable AWS S3 extension release, and leaves application projects unchanged.
+
+Start with [`authorship/aws-python/REVIEW.md`](authorship/aws-python/REVIEW.md) for the cohesive adoption and maintenance argument. [`docs/sdk-author-experience.md`](docs/sdk-author-experience.md) is the living record of the SDK-author burden and must change whenever the proposed mapping contract changes.
+
+The earlier combined-boto3 checkpoint under [`authorship/boto3`](authorship/boto3/) is retained only because it records the ownership flaw that led to recursive composition.
+
+## Maintenance experiment
+
+[`maintenance/aws-python-s3`](maintenance/aws-python-s3/) defines historical tuples, the ongoing observation cursor, classifications, and durable evidence policy. The runner resolves immutable source, validates package compatibility, regenerates the complete owner graph from accepted extension semantics, runs static or full packaging gates, and distinguishes `automatic`, `extension-review-required`, `sdk-review-required`, and `invalid` outcomes.
+
+The manual historical workflow replays configured releases. The daily ongoing workflow resolves every boto3 release after the live-observation floor plus compatible botocore and s3transfer packages from boto3's source declarations, and it revalidates the latest graph when the selected extension semantic digest changes.
+
+The ten-release historical sample remained automatic after the authoritative Smithy migration. The first ongoing observation—boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2—passed the full package, installed-graph, runtime-surface, dependency, and seven-application proof without a semantic mapping change.
 
 ## Expansion policy
 
-The next service should be added only after the S3 investigation produces a defensible mapping model and adopter experience. DynamoDB and SQS are the intended next services because they exercise different resource and operation semantics while remaining within the same generated SDK family.
+DynamoDB and SQS are the intended next services after the S3 architecture and maintainer experience are accepted. They exercise table, queue, and cross-service semantics while remaining in the same generated SDK family.
 
-New languages should be added as separate, independently buildable projects under `s3/<language>/`. Adding a project does not imply that its profiler must immediately support SDK extraction; profiler changes are discussed separately before implementation.
+New languages belong in separate independently buildable projects under `s3/<language>/`. Adding a corpus project does not authorize a profiler change; language-profiler expansion is discussed separately before implementation.
 
-## Documentation obligation
-
-[`docs/sdk-author-experience.md`](docs/sdk-author-experience.md) is the living record of what an SDK author would need to implement. It must change in the same work that changes any proposed SDK mapping contract. Until a contract survives this corpus, it explicitly records that no SDK-author implementation has been accepted.
-
-The investigation is also governed by:
-
-- [`docs/product-constraints.md`](docs/product-constraints.md), which records the adopter and project constraints that architecture proposals must satisfy;
-- [`docs/investigation-method.md`](docs/investigation-method.md), which defines how proposals are evaluated;
-- [`s3/s3-put-object-ground-truth.md`](s3/s3-put-object-ground-truth.md), which separates what the first boto3 case proves from what an extension must define.
-
-The current SDK-owner authorship proof is under
-[`authorship/aws-python`](authorship/aws-python/). It builds owner-aligned
-botocore, s3transfer, and boto3 mappings into locally installed wheels,
-recursively verifies them without SDK imports, and leaves every application
-project unchanged. The earlier combined-boto3 checkpoint remains under
-[`authorship/boto3`](authorship/boto3/) because it records the ownership problem
-that led to the recursive design.
-
-## Historical maintenance automation
-
-[`maintenance/aws-python-s3`](maintenance/aws-python-s3/) defines the immutable release tuples and maintainer-evidence rules for the historical experiment. The single-release runner, replay wrapper, and manually triggered GitHub workflow regenerate owner mappings, classify drift, optionally build and install the SDK graph, run the application fixtures, and retain focused reports without editing semantic overlays. The first ten-release result is recorded in [`evidence/aws-python/2026-08-20-initial-historical-rehearsal.md`](evidence/aws-python/2026-08-20-initial-historical-rehearsal.md).
+The investigation is also governed by [`docs/product-constraints.md`](docs/product-constraints.md), [`docs/investigation-method.md`](docs/investigation-method.md), and [`s3/s3-put-object-ground-truth.md`](s3/s3-put-object-ground-truth.md).

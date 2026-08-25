@@ -4,25 +4,13 @@
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
-def read_json(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as stream:
-        value = json.load(stream)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path}: expected a JSON object")
-    return value
-
-
-def write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+from serialization import read_document, write_yaml
 
 
 def utc_now() -> str:
@@ -44,7 +32,7 @@ def render_summary(summary: dict[str, Any]) -> str:
         lines.append(f"| {release['id']} | {release['boto3']} | {release['botocore']} | {release['s3transfer']} | {run['classification']} | {reasons} |")
     lines.extend([
         "",
-        "An `automatic` result means the accepted semantic inputs required no edit and every requested gate passed. A `review-required` result is an intentional interruption for potential semantic or package-integration drift. An `invalid` result means the experiment could not classify the release safely.",
+        "An `automatic` result means the accepted semantic inputs required no edit and every requested gate passed. An `extension-review-required` result routes authoritative API-semantic drift to extension stakeholders. An `sdk-review-required` result routes language surface or package drift to SDK mapping maintainers. An `invalid` result means the experiment could not classify the release safely.",
         "",
     ])
     return "\n".join(lines)
@@ -61,7 +49,7 @@ def main() -> None:
     parser.add_argument("--static-only", action="store_true")
     args = parser.parse_args()
 
-    experiment = read_json(args.experiment)
+    experiment = read_document(args.experiment)
     configured = {item["id"]: item for item in experiment.get("releases", [])}
     selected = args.release or list(configured)
     unknown = sorted(set(selected) - set(configured))
@@ -95,7 +83,7 @@ def main() -> None:
             command.append("--static-only")
         completed = subprocess.run(command, check=False)
         runner_exit_codes[release_id] = completed.returncode
-        result_path = args.output / release_id / "run.json"
+        result_path = args.output / release_id / "run.yaml"
         if not result_path.exists():
             runs.append(
                 {
@@ -105,19 +93,22 @@ def main() -> None:
                     "failure": {
                         "stage": "replay-runner",
                         "reason": "missing-run-result",
-                        "diagnostics": f"single-release runner exited {completed.returncode} without run.json",
+                        "diagnostics": f"single-release runner exited {completed.returncode} without run.yaml",
                     },
                 }
             )
         else:
-            runs.append(read_json(result_path))
+            runs.append(read_document(result_path))
 
     classifications = {run["classification"] for run in runs}
     if "invalid" in classifications:
         classification = "invalid"
         exit_code = 1
-    elif "review-required" in classifications:
-        classification = "review-required"
+    elif "extension-review-required" in classifications:
+        classification = "extension-review-required"
+        exit_code = 2
+    elif "sdk-review-required" in classifications:
+        classification = "sdk-review-required"
         exit_code = 2
     else:
         classification = "automatic"
@@ -130,7 +121,7 @@ def main() -> None:
         "runnerExitCodes": runner_exit_codes,
         "runs": runs,
     }
-    write_json(args.output / "summary.json", summary)
+    write_yaml(args.output / "summary.yaml", summary)
     (args.output / "summary.md").write_text(render_summary(summary), encoding="utf-8")
     print(f"overall classification: {classification}")
     print(f"summary: {args.output / 'summary.md'}")

@@ -10,8 +10,8 @@ index 5e26c42..f83cb83 100644
 +    package_data={
 +        'boto3': [
 +            'data/aws/resources/*.json', 'examples/*.rst',
-+            'runtimeconditions/index.json',
-+            'runtimeconditions/services/*.json',
++            'runtimeconditions/index.yaml',
++            'runtimeconditions/services/*.yaml',
 +        ]
 +    },
      include_package_data=True,

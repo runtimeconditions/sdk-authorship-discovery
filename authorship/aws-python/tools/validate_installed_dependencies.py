@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 from importlib import metadata
 from typing import Any
 
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
+from serialization import render_yaml
 
 
 def main() -> None:
@@ -64,7 +64,7 @@ def main() -> None:
         visit(distribution_name)
 
     print("selected installed dependency graph passed")
-    print(json.dumps({"roots": args.distribution, "distributions": resolved}, indent=2, sort_keys=True))
+    print(render_yaml({"roots": args.distribution, "distributions": resolved}), end="")
 
 
 if __name__ == "__main__":

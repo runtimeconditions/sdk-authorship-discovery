@@ -16,7 +16,7 @@ The implementation supports a credible candidate architecture with five defining
 4. Static metadata ships with its owning SDK artifact, or with a version-aligned companion artifact, and can be discovered without importing or executing the SDK.
 5. Routine releases should regenerate automatically. Changes that may alter Runtime Condition meaning must stop with a focused maintainer review rather than being accepted silently.
 
-The proof establishes first-time generation, package integration, recursive discovery, source validation, and unchanged application behavior for one real SDK dependency graph. It does not yet establish routine release automation, maintainer acceptance, a cross-language standard, or profiler consumption.
+The proof establishes first-time generation, package integration, recursive discovery, source validation, unchanged application behavior, authoritative extension maintenance, historical SDK replay, and ongoing SDK release observation for one real dependency graph. It does not yet establish maintainer acceptance, a cross-language standard, profiler consumption, or official artifact publication.
 
 ## Product constraints
 
@@ -36,7 +36,7 @@ The proof establishes first-time generation, package integration, recursive disc
 - Generated SDK source must not be edited by hand.
 - Canonical service semantics should be authored once rather than reproduced in every generated language.
 - An ordinary SDK release must not require an ordinary handwritten mapping edit.
-- Maintainers must not review generated mapping JSON line by line.
+- Maintainers must not review generated mapping YAML line by line.
 - Mapping support must not add Runtime Conditions code to the SDK's runtime path.
 - Validation failures must identify the small authored input or upstream behavior that requires attention.
 
@@ -54,7 +54,7 @@ The living constraints are recorded in [`../../docs/product-constraints.md`](../
 
 ### Extension alignment
 
-An SDK mapping does not define Runtime Condition vocabulary. It maps SDK behavior to Conditions already defined by an extension and must obey that extension's schemas. This makes an extension a prerequisite for an authoritative mapping, while keeping provisioning, credentials, platform policy, and incomplete-detection policy outside the mapping.
+An SDK mapping does not define Runtime Condition vocabulary. It maps SDK behavior to Conditions already defined by an exact immutable extension release and must obey that extension's schemas. The current contract verifies the extension identifier, semantic version, extension semantic digest, and language-neutral service-mapping digest while keeping provisioning, credentials, platform policy, and incomplete-detection policy outside the mapping.
 
 ### Three input classes
 
@@ -90,17 +90,17 @@ The proposed reference, dependency, index, discovery, and failure semantics are 
 Each owning Python distribution packages a small index and one or more static mapping files:
 
 ```text
-<package>/runtimeconditions/index.json
-<package>/runtimeconditions/mappings/*.json
+<package>/runtimeconditions/index.yaml
+<package>/runtimeconditions/mappings/*.yaml
 ```
 
-The index identifies the owning distribution, exact installed version, mapping identity, service, file path, and digest. Discovery reads package metadata and JSON without importing the SDK. The SDK does not import Runtime Conditions code and the application adds no runtime dependency.
+The index identifies the owning distribution, exact installed version, mapping identity, service, file path, and digest. Discovery reads package metadata and YAML without importing the SDK. The SDK does not import Runtime Conditions code and the application adds no runtime dependency.
 
 ## What has been implemented and proved
 
 | Capability | Status |
 | --- | --- |
-| Generate canonical service semantics from an existing service model plus a reviewed semantic overlay | Proved |
+| Generate canonical service semantics from AWS's authoritative public Smithy model plus a reviewed external Smithy overlay | Proved |
 | Generate language and SDK surfaces from existing resource models and focused wrapper annotations | Proved for the Python case |
 | Split mappings across independently versioned behavior owners | Proved across three real Python distributions |
 | Validate package versions, modeled inventories, generated names, handwritten signatures, bindings, and delegates against source | Proved |
@@ -109,25 +109,26 @@ The index identifies the owning distribution, exact installed version, mapping i
 | Build and install local SDK wheels without registry publication | Proved |
 | Discover installed mappings recursively without importing SDK modules | Proved |
 | Preserve existing application behavior with the rebuilt SDK packages | Proved across seven application fixtures |
-| Process configured immutable upstream releases automatically | Implemented through a manually triggered historical workflow; live watching is not implemented |
-| Classify release drift and create a concise maintainer review report | Implemented and exercised against ten releases |
+| Process configured immutable historical releases automatically | Implemented through a manually triggered historical workflow and exercised against ten releases |
+| Observe ongoing upstream releases and accepted extension semantic changes | Implemented through a scheduled workflow with durable evidence and focused review routing |
+| Classify extension drift, SDK drift, and automation failure separately | Implemented and exercised through both maintenance lanes |
 | Publish official or community mapping artifacts continuously | Not implemented |
 | Consume the mapping in a language profiler | Not implemented |
 | Establish a cross-language mapping standard | Not decided |
 
-The implementation used official boto3 1.43.70, botocore 1.43.70, and s3transfer 0.19.2 source. The generated metadata added 11,678 compressed bytes across the three wheels. The installed packages passed application regression tests, static discovery, recursive validation, and runtime-surface checks. No profiler was modified.
+The packaging baseline used official boto3 1.43.70, botocore 1.43.70, and s3transfer 0.19.2 source. The generated YAML metadata added 10,238 compressed bytes across the three wheels. The first ongoing observation then resolved and fully validated boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 against the same extension release with no semantic mapping change. No profiler was modified.
 
 The evidence is recorded in [`results/2026-08-14-owner-aligned-packaging-rehearsal.md`](results/2026-08-14-owner-aligned-packaging-rehearsal.md).
 
 ## Can new releases trigger automatic mapping jobs?
 
-Yes, the architecture and current generator/validator boundaries support that direction. No, the current repository is not yet an end-to-end continuously maintained system.
+Yes. The repository now contains a daily upstream observer that resolves a real boto3-rooted dependency graph from official tags and boto3's source-declared dependency ranges, regenerates the three owner mappings, validates their exact extension dependency, optionally builds and installs local wheels, runs the application fixtures, and records a durable observation.
 
 The existing tools already accept source models, source trees, versions, reviewed overlays, and output paths. They generate deterministic artifacts, reject owner/version mismatches, validate references, and stage metadata into package source. Those are the difficult core operations a release job needs.
 
-The historical maintenance control plane is now implemented: it obtains immutable tags, derives and validates source versions, checks the selected dependency tuple against source declarations, regenerates and validates owner mappings, classifies the release, optionally builds and installs the owner graph, runs application fixtures, and emits machine-readable and maintainer-facing reports. Redundant exact-version fields were removed from the boto3 and s3transfer semantic overlays; version identity remains enforced in generated metadata, source validation, staging, and installed discovery.
+The historical and ongoing control planes obtain immutable tags, derive and validate source versions, check the selected dependency tuple against source declarations, regenerate and validate owner mappings, classify the release, optionally build and install the owner graph, run application fixtures, and emit machine-readable and maintainer-facing reports. Exact SDK versions are derived from source and remain enforced in generated metadata, staging, and installed discovery; they are not handwritten semantic-overlay changes.
 
-What remains missing is live upstream release detection, automatic pull-request construction, an official or community publication path, and evidence across a genuine semantic change. Semantic fingerprints remain deliberate review gates: when an operation set or meaningful behavior changes, the job stops instead of silently accepting it.
+What remains missing is an official or community publication path, evidence across a genuine SDK semantic interruption, independent observation of packages that cannot participate in a valid boto3-rooted graph, maintainer feedback, and profiler consumption. The observer creates a focused pull request containing evidence and state for automatic or review-required outcomes and a deduplicated issue for review-required or invalid outcomes. It never silently approves new Runtime Condition semantics.
 
 ### SDK-owned automation
 
@@ -170,7 +171,7 @@ An SDK repository would:
 5. Add source, reference, and representative-resolution gates.
 6. Review authored semantic changes and concise generated summaries.
 
-It would not rewrite generated SDK source, add Runtime Conditions runtime APIs, or ask maintainers to review the generated JSON.
+It would not rewrite generated SDK source, add Runtime Conditions runtime APIs, or ask maintainers to review the generated YAML.
 
 ### Routine maintenance
 
@@ -207,18 +208,18 @@ Those mechanics should not dominate this review. The detailed service operation 
 - [`../../../extensions/aws-s3/docs/validation.md`](../../../extensions/aws-s3/docs/validation.md)
 - [`../../../extensions/aws-s3/docs/sdk-author-workflow.md`](../../../extensions/aws-s3/docs/sdk-author-workflow.md)
 
-The three reviewed example overlays are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The generated JSON should only be inspected for representative spot checks or to investigate a failed validation claim.
+The reviewed Smithy service overlay and the three SDK-specific annotation files are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The generated YAML should only be inspected for representative spot checks or to investigate a failed validation claim.
 
 ## Current maintenance experiment
 
-The repeatable release-maintenance runner and manually triggered GitHub workflow are implemented. The runner:
+The repeatable release-maintenance runner, manually triggered historical workflow, and scheduled ongoing-release workflow are implemented. The runner:
 
-1. Accepts an owner repository and immutable release tag as input.
+1. Accepts a configured historical tuple or a dynamically resolved compatible release tuple.
 2. Obtains and verifies the source version without requiring a semantic-overlay version edit.
-3. Regenerates only the mapping owned by that package.
+3. Regenerates each mapping in the selected owner graph from the accepted extension service mapping and SDK-owned inputs.
 4. Validates source surfaces, recursive references, package staging, and representative resolutions.
 5. Compares the new release with the last accepted mapping inputs and outputs.
-6. Classifies the result as automatic, review required, or unsupported/invalid.
+6. Classifies the result as `automatic`, `extension-review-required`, `sdk-review-required`, or `invalid`.
 7. Produces a concise Markdown review report containing the affected authored inputs, upstream source/model changes, counts, digests, diagnostics, and representative traces.
 8. Emits deterministic artifacts suitable for a pull request or release job.
 
@@ -226,9 +227,11 @@ The repeatable release-maintenance runner and manually triggered GitHub workflow
 
 The first sample ran ten consecutive boto3/botocore releases from 1.43.61 through 1.43.70 with s3transfer 0.19.2. All ten static runs were automatic, required no authored mapping change, and produced no semantic mapping difference from the accepted baseline. Full package and application verification also passed at 1.43.61, 1.43.69, and 1.43.70. The result and its limits are recorded in [`../../evidence/aws-python/2026-08-20-initial-historical-rehearsal.md`](../../evidence/aws-python/2026-08-20-initial-historical-rehearsal.md).
 
-This result demonstrates a zero-touch routine-release path but does not yet test a real semantic interruption or an s3transfer version transition. The next sample must expand backward until it crosses genuine SDK or service behavior drift, then measure whether the resulting review request is precise and tolerable.
+This result demonstrates a zero-touch routine-release path but does not test a genuine SDK semantic interruption or an s3transfer transition. The authoritative Smithy replay separately found 24 S3 model revisions and five operation-set transitions, establishing a real extension-review history without attributing that work to SDK maintainers.
 
-For each release, continue to record:
+### First ongoing result
+
+On 2026-08-25 the resolver found boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 from official tags and boto3's declared ranges. All semantic, source, recursive graph, packaging, installed-discovery, runtime-surface, dependency, and seven application-fixture gates passed. The three mappings were semantically unchanged apart from their owner versions, so the observation was classified `automatic` and recorded under [`../../evidence/aws-python/ongoing`](../../evidence/aws-python/ongoing/).
 
 For each release, record:
 
@@ -245,13 +248,13 @@ The milestone succeeds only if:
 
 - releases with unchanged semantics require no handwritten mapping change;
 - semantic changes fail closed and identify a small, relevant review surface;
-- maintainers never need to inspect the full generated JSON;
+- maintainers never need to inspect the full generated YAML;
 - generated artifacts remain version-aligned with their owning packages;
 - the resolved multi-package graph validates;
 - the application experience remains unchanged;
 - the release report is understandable enough to use in an SDK maintainer interview.
 
-After clean GitHub Actions reruns and evidence across at least one genuine semantic change, the same runner can be connected to an SDK-owned release workflow or a community upstream watcher. The measured reports should then be taken to boto3, botocore, and s3transfer maintainers to test whether the burden and diagnostics are acceptable. Only after that feedback should the candidate contract be revised or frozen for a first profiler-consumption prototype.
+After the scheduled workflows produce clean hosted evidence and at least one genuine SDK review event, the measured reports should be taken to boto3, botocore, and s3transfer maintainers to test whether the burden and diagnostics are acceptable. Only after that feedback should the cross-language contract be revised or frozen for a first profiler-consumption prototype.
 
 ## Decisions intentionally deferred
 
@@ -261,7 +264,7 @@ After clean GitHub Actions reruns and evidence across at least one genuine seman
 - The portable predicate language needed when a wrapper can select multiple runtime paths.
 - Profiler behavior when application source cannot prove a mapping branch.
 - Expansion to other AWS services and other programming languages.
-- The all-services Smithy workflow recorded in [`../../../todos/aws-smithy-all-services-generator.md`](../../../todos/aws-smithy-all-services-generator.md).
+- Scaling the working external Smithy compiler from S3 to all services and integrating with AWS's internal Smithy/SDK generators, tracked in [`../../../todos/aws-smithy-all-services-generator.md`](../../../todos/aws-smithy-all-services-generator.md).
 
 ## Recommended review order
 
@@ -275,4 +278,4 @@ After clean GitHub Actions reruns and evidence across at least one genuine seman
 
 ## Current status in one sentence
 
-The work proves a viable first-time SDK mapping authorship and packaging model; the next necessary proof is that real releases can be regenerated automatically while interrupting maintainers only for small, genuine semantic changes.
+The work now proves a viable authorship, packaging, extension-maintenance, and ongoing SDK-regeneration model; the next necessary proof is a genuine SDK review event and maintainer feedback on whether its interruption is small and understandable enough for adoption.

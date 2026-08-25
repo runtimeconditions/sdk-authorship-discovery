@@ -9,7 +9,7 @@ on:
         default: main
         type: string
       releases:
-        description: Optional comma-separated release IDs from experiment.json; blank runs all configured releases
+        description: Optional comma-separated release IDs from experiment.yaml; blank runs all configured releases
         required: false
         type: string
       validation_level:
@@ -48,7 +48,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install build and runtime prerequisites
-        run: python -m pip install --disable-pip-version-check setuptools wheel packaging jmespath python-dateutil urllib3 six
+        run: python -m pip install --disable-pip-version-check -r sdk/authorship/aws-python/requirements.txt
 
       - name: Select configured releases
         id: selection
@@ -82,7 +82,7 @@ jobs:
         run: |
           mapfile -d '' arguments < "$RUNNER_TEMP/replay-arguments"
           python sdk/authorship/aws-python/tools/replay_releases.py \
-            --experiment sdk/maintenance/aws-python-s3/experiment.json \
+            --experiment sdk/maintenance/aws-python-s3/experiment.yaml \
             --extensions-root extensions \
             --source-cache "$RUNNER_TEMP/upstream-source-cache" \
             --work-root "$RUNNER_TEMP/maintenance-work" \

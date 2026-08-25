@@ -51,20 +51,20 @@ Measured SDK and application burden for this packaging slice:
 | Application files changed | 0 |
 | Application declarations added | 0 |
 
-The shared S3 semantic input is 80 formatted JSON lines. It is not duplicated
+The shared S3 semantic input was 80 formatted lines. It is not duplicated
 inside boto3; the rehearsal stages its generated result.
 
 Generated source-tree additions:
 
 ```text
-boto3/runtimeconditions/index.json                 552 bytes
-boto3/runtimeconditions/services/s3.json        63,510 bytes
+boto3/runtimeconditions/index.yaml                 552 bytes
+boto3/runtimeconditions/services/s3.yaml        63,510 bytes
 ```
 
 ## Wheel comparison
 
 Both wheels were built from the same official source with the same Python 3.12
-build runtime. Wheel compression makes the generated JSON inexpensive for this
+build runtime. Wheel compression makes the generated YAML inexpensive for this
 single service:
 
 | Wheel | Compressed bytes |
@@ -96,16 +96,16 @@ The discovery probe:
 
 Result:
 
-```json
+```yaml
 {
   "distribution": "boto3",
   "version": "1.43.70",
-  "index": "boto3/runtimeconditions/index.json",
+  "index": "boto3/runtimeconditions/index.yaml",
   "sdkImported": false,
   "mappings": [
     {
       "service": "s3",
-      "path": "boto3/runtimeconditions/services/s3.json",
+      "path": "boto3/runtimeconditions/services/s3.yaml",
       "sha256": "52b42a7df376649c4238b7fa6b38dde17de37c0bde8c0ac79fae572a0339022c",
       "extension": "https://runtimeconditions.io/extensions/aws-s3/v1alpha1/runtimeconditions.extension.yaml",
       "clientOperations": 116,
