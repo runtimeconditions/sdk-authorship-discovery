@@ -2,7 +2,7 @@
 
 ## Status
 
-**Implemented and locally proved; not yet accepted profiler input.**
+**Implemented as locally packaged and profiler-consumed owner-aligned metadata; upstream acceptance remains untested.**
 
 Start with [`REVIEW.md`](REVIEW.md) for the cohesive adoption, authorship, ownership, maintenance, and next-step argument. [`mapping-contract.md`](mapping-contract.md) records the exact mapping, dependency, discovery, and failure contract implemented here.
 
@@ -14,7 +14,7 @@ The proof packages the S3 mapping across the three Python distributions that own
 | `s3transfer` 0.19.2 baseline | nine public transfer entrypoints, four logical transfer calls, and classic/CRT execution paths | botocore operations |
 | `boto3` 1.43.70 baseline | client/resource factories, the complete S3 resource graph, resource waiters, and 17 managed-transfer wrapper surfaces | botocore operations, botocore waiters, and s3transfer calls |
 
-All three wheels were built from official tagged source, installed by local file path, and discovered recursively without importing the SDK packages. Seven application projects passed unchanged. No profiler was modified.
+All three wheels were built from official tagged source, installed by local file path, and discovered recursively without importing the SDK packages. The real Python profiler now consumes the three owner mappings through its installed command and profiles all seven unchanged application projects; start with [`results/profiler-integration.md`](results/profiler-integration.md) for the exact behavior, registry-free proof, maintenance gate, and remaining limits.
 
 The earlier combined-boto3 checkpoint under [`../boto3`](../boto3/) proved package delivery but associated independently versioned botocore and s3transfer behavior with the wrong owner. This implementation supersedes that layout.
 
@@ -109,23 +109,23 @@ python3 sdk/authorship/aws-python/tools/discover_mappings.py \
   --root-mapping boto3.aws.s3
 ```
 
-## Measured packaging result
+## Current measured packaging result
 
-The YAML baseline mappings added 10,238 compressed bytes across the three wheels:
+Paired Python 3.12 builds of the same official unmodified source and source containing the current authoritative-Smithy YAML mappings measured a 10,441-byte compressed increase across the three wheels. This replaces the earlier 10,238-byte historical measurement that predated the generated semantic-digest fields:
 
 | Wheel | Baseline | With mapping | Increase |
 | --- | ---: | ---: | ---: |
-| boto3 | 140,125 B | 143,966 B | 3,841 B |
-| botocore | 15,594,015 B | 15,598,390 B | 4,375 B |
-| s3transfer | 90,317 B | 92,339 B | 2,022 B |
+| boto3 | 140,127 B | 144,047 B | 3,920 B |
+| botocore | 15,594,015 B | 15,598,444 B | 4,429 B |
+| s3transfer | 90,318 B | 92,410 B | 2,092 B |
 
-Installed discovery resolved botocore, then s3transfer, then boto3 without importing their modules. Dependency verification, runtime-surface checks, and all direct-client, session-client, resource, application-wrapper, dependency-injection, dynamic-service, and managed-transfer tests passed.
+Installed discovery resolved botocore, then s3transfer, then boto3 without importing their modules. Dependency verification, runtime-surface checks, all direct-client, session-client, resource, application-wrapper, dependency-injection, dynamic-service, and managed-transfer tests, and all seven real profiler command comparisons passed.
 
 ## Maintenance experiment
 
 [`../../maintenance/aws-python-s3`](../../maintenance/aws-python-s3/) contains the historical and ongoing experiment. The single-release runner accepts configured historical tuples or a dynamically resolved release file, regenerates the complete owner graph, and returns one of four classifications: `automatic`, `extension-review-required`, `sdk-review-required`, or `invalid`.
 
-The ten-release historical sample from boto3/botocore 1.43.61 through 1.43.70 was automatic. The first ongoing observation resolved boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 from official tags and boto3's source declarations. It passed all generation, package, installed-graph, runtime, and application gates with no semantic mapping change.
+The ten-release historical sample from boto3/botocore 1.43.61 through 1.43.70 was automatic. The first ongoing observation resolved boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 from official tags and boto3's source declarations. It passed all generation, package, installed-graph, runtime, and application gates with no semantic mapping change. Those hosted observations predate the profiler gate; future full observations additionally build all seven accepted profiles through an explicit profiler revision and compare their YAML semantics.
 
 The daily observer processes unobserved boto3-rooted package graphs and revalidates the latest graph when the accepted extension semantic digest changes. It creates durable evidence and focused review routing. It does not yet cover owner-isolated releases that cannot participate in a valid boto3 graph.
 
@@ -137,7 +137,7 @@ When mapping support or static detection is incomplete, extension-provided no-op
 
 ## Deliberately not done
 
-- No profiler consumes these mappings yet; expanding a language profiler requires a separate discussion.
+- No profiler support is claimed beyond the seven accepted AWS source patterns and the mapping constructs recorded in the profiler integration review.
 - No mapping claims fixed AWS credential or environment-variable conventions.
 - No mapping declares coverage, unresolved observations, CI policy, or adapter failure behavior.
 - No official or community artifact publication mechanism has been selected.

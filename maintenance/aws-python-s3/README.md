@@ -32,7 +32,7 @@ Generated mappings, source checkouts, temporary package trees, and wheels remain
 1. List stable tags from the three official upstream repositories.
 2. Select the next unobserved boto3 release after the configured floor, preferring the same botocore release when boto3's declared range permits it; once the root backlog is exhausted, observe a changed latest-compatible dependency graph or changed extension semantic digest.
 3. Read boto3's dependency requirements from the immutable tagged source and select a compatible botocore and s3transfer tuple.
-4. Run extension-alignment, generation, source, recursive-reference, representative-resolution, packaging, installed-discovery, runtime-surface, dependency, and application-fixture gates.
+4. Run extension-alignment, generation, source, recursive-reference, representative-resolution, packaging, installed-discovery, runtime-surface, dependency, application-fixture, and real profiler acceptance-profile gates.
 5. Store complete temporary artifacts for 90 days and create a focused pull request containing durable evidence and the updated observation cursor; while that pull request remains open, scheduled runs recognize it and do not repeat the expensive proof.
 6. Create or update a deduplicated issue when extension review, SDK review, or automation repair is required.
 
@@ -47,6 +47,7 @@ python3 authorship/aws-python/tools/run_release_maintenance.py \
   --experiment maintenance/aws-python-s3/experiment.yaml \
   --release baseline-1.43.70 \
   --extensions-root ../extensions \
+  --profiler-root ../python-rc-profiler \
   --source boto3=/absolute/path/to/boto3-1.43.70 \
   --source botocore=/absolute/path/to/botocore-1.43.70 \
   --source s3transfer=/absolute/path/to/s3transfer-0.19.2 \
@@ -54,7 +55,7 @@ python3 authorship/aws-python/tools/run_release_maintenance.py \
   --output .work/maintenance-evidence/baseline-1.43.70
 ```
 
-Omit the `--source` arguments to fetch immutable upstream tags into the shared cache. Use `--static-only` while developing generation and source classification. The default also patches package data, builds wheels, installs the owner graph, discovers packaged mappings, validates runtime surfaces and dependency compatibility, and runs all application fixtures.
+Omit the `--source` arguments to fetch immutable upstream tags into the shared cache. Use `--static-only` while developing generation and source classification; static runs do not require `--profiler-root`. The default patches package data, builds wheels, installs the owner graph, discovers packaged mappings, validates runtime surfaces and dependency compatibility, runs all application fixtures, invokes the real profiler command against the installed mappings, and semantically compares all seven generated profiles with the accepted YAML results. A profiler integration failure is `invalid` rather than presumptively assigned to an SDK maintainer.
 
 Resolve a live candidate independently with:
 
@@ -71,4 +72,4 @@ Pass that output to the runner with `--release-file .work/release-candidate.yaml
 
 ## Current evidence
 
-The ten-release historical sample was automatic. The first ongoing observation resolved boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 and passed the full proof without a semantic mapping change. That release establishes the ongoing observer's floor; future runs process every later boto3 release rather than attempting to turn the deliberate gap between the historical sample and live observation into another backfill. Its focused report is under [`../../evidence/aws-python/ongoing/ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2`](../../evidence/aws-python/ongoing/ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2/).
+The ten-release historical sample was automatic. The first ongoing observation resolved boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 and passed the then-current full package and application proof without a semantic mapping change. That hosted observation predates the profiler gate. The same baseline package graph has since passed the expanded local 49-stage proof, including seven real profiler invocations and seven semantic profile comparisons. The 1.43.79 release establishes the ongoing observer's floor; future runs process every later boto3 release rather than attempting to turn the deliberate gap between the historical sample and live observation into another backfill. Its focused report is under [`../../evidence/aws-python/ongoing/ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2`](../../evidence/aws-python/ongoing/ongoing-boto3-1.43.79-botocore-1.43.79-s3transfer-0.19.2/).

@@ -1,8 +1,10 @@
 # Runtime Conditions SDK mapping corpus
 
-This repository contains independently runnable applications, an owner-aligned SDK authorship proof, and historical and ongoing maintenance experiments for external-resource requirements expressed through SDK usage.
+This repository contains independently runnable applications, owner-aligned SDK authorship proofs, and historical and ongoing maintenance experiments for external-resource requirements expressed through SDK usage.
 
 Existing Runtime Conditions package-manifest conventions and profiler behavior are not treated as stable foundations. The current mapping architecture is the result of this corpus and remains subject to SDK-maintainer review before cross-language standardization or profiler adoption.
+
+[`docs/test-cohort.md`](docs/test-cohort.md) defines the accepted cross-architecture cohort: AWS Python, Kubernetes Python, NATS Go, OpenTelemetry Python, OpenFeature Go, and Dapr Java. Cases are investigated sequentially so one SDK family's implementation details do not silently become universal requirements.
 
 ## Application corpus
 
@@ -20,7 +22,11 @@ Every project uses ordinary boto3 code, can perform a real S3 request with norma
 | `dynamic-service` | Runtime service name passed to `boto3.client` | Not statically proven | What application fallback is usable without inventing a dependency? |
 | `managed-transfer` | `boto3.client("s3").upload_file(...)` crosses into s3transfer | Resolvable through nested mappings | How are wrapper ownership, receiver configuration, and mutually exclusive execution paths preserved? |
 
-“Resolvable” is an investigation target rather than a claim that the current Python profiler supports package mappings. Handling incomplete application detection remains a profiler, developer, organization, and downstream-policy decision; the SDK mapping layer does not publish coverage or unresolved observations.
+“Resolvable” is an investigation target rather than a claim that the current Python profiler supports every package-mapping pattern. The profiler now consumes the accepted Kubernetes direct and callable-delegation patterns plus all seven AWS fixtures through client factories, application data flow, resources, and nested owner mappings. Later cohort patterns and unproved SDK surfaces still require integration. Handling incomplete application detection remains a profiler, developer, organization, and downstream-policy decision; the SDK mapping layer does not publish coverage or unresolved observations.
+
+The second model-generated family begins under [`kubernetes`](kubernetes/) with an unchanged application using the official Kubernetes Python client. Its extension and SDK mapping are deliberately separate from the AWS implementation.
+
+[`authorship/kubernetes-python`](authorship/kubernetes-python/) projects the exact Python 36.0.3 generator input into statically verified public SDK symbols, joins generated endpoints back to the authoritative Kubernetes inventory, source-verifies one handwritten `Watch.stream` delegation annotation, targets an immutable Kubernetes API extension release, packages the mapping into a locally rebuilt wheel, profiles unchanged direct and delegated applications, and replays the 36.0.x release line. `DynamicClient` and discovery-created resource behavior remain explicitly outside the mapping while their owner-aligned representation is investigated.
 
 ## Set up and test the applications
 
@@ -57,6 +63,8 @@ Installed projects also expose small real-upload commands. Those commands intent
 
 [`authorship/aws-python`](authorship/aws-python/) packages owner-aligned botocore, s3transfer, and boto3 mappings into locally installed wheels, discovers them recursively without SDK imports, validates their exact relationship to an immutable AWS S3 extension release, and leaves application projects unchanged.
 
+[`authorship/kubernetes-python`](authorship/kubernetes-python/) packages the second owner-aligned proof. Start with its [`results/python-36.0.3-mapping-review.md`](authorship/kubernetes-python/results/python-36.0.3-mapping-review.md), [`results/packaging-review.md`](authorship/kubernetes-python/results/packaging-review.md), and [`docs/sdk-author-workflow.md`](authorship/kubernetes-python/docs/sdk-author-workflow.md).
+
 Start with [`authorship/aws-python/REVIEW.md`](authorship/aws-python/REVIEW.md) for the cohesive adoption and maintenance argument. [`docs/sdk-author-experience.md`](docs/sdk-author-experience.md) is the living record of the SDK-author burden and must change whenever the proposed mapping contract changes.
 
 The earlier combined-boto3 checkpoint under [`authorship/boto3`](authorship/boto3/) is retained only because it records the ownership flaw that led to recursive composition.
@@ -69,10 +77,12 @@ The manual historical workflow replays configured releases. The daily ongoing wo
 
 The ten-release historical sample remained automatic after the authoritative Smithy migration. The first ongoing observation—boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2—passed the full package, installed-graph, runtime-surface, dependency, and seven-application proof without a semantic mapping change.
 
+The final Kubernetes Python generator processes v36.0.0 through v36.0.3 with no per-operation semantic annotation or binding edit. The investigation itself was not zero-maintenance: the replay excludes the substantial initial integration work, and the initial backward replay then failed on v36.0.0, whose source contained only the synchronous generated surface. The projection required an authored repair to discover the flavors present in each release. This proves compatibility of the repaired generator with the historical sample, not the effort of a chronological production integration.
+
 ## Expansion policy
 
-DynamoDB and SQS are the intended next services after the S3 architecture and maintainer experience are accepted. They exercise table, queue, and cross-service semantics while remaining in the same generated SDK family.
+The next investigation axis is SDK architecture rather than another AWS service. Kubernetes `DynamicClient` and discovery-created resource behavior are the remaining boundary of the current package; NATS, OpenTelemetry, OpenFeature, and Dapr then test handwritten client, exporter, provider, and sidecar delegation models. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
 
 New languages belong in separate independently buildable projects under `s3/<language>/`. Adding a corpus project does not authorize a profiler change; language-profiler expansion is discussed separately before implementation.
 
-The investigation is also governed by [`docs/product-constraints.md`](docs/product-constraints.md), [`docs/investigation-method.md`](docs/investigation-method.md), and [`s3/s3-put-object-ground-truth.md`](s3/s3-put-object-ground-truth.md).
+The investigation is also governed by [`docs/product-constraints.md`](docs/product-constraints.md), [`docs/investigation-method.md`](docs/investigation-method.md), [`docs/test-cohort.md`](docs/test-cohort.md), and [`s3/s3-put-object-ground-truth.md`](s3/s3-put-object-ground-truth.md).

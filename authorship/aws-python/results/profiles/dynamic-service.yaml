@@ -1,0 +1,9 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: aws-s3-dynamic-service
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/s3/python/dynamic-service
+  version: 0.1.0
+extensions: []
+conditions: []

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "runtimeconditions-sdk-kubernetes-configmap-reader"
+version = "0.1.0"
+description = "Kubernetes ConfigMap reader for Runtime Conditions SDK mapping research"
+requires-python = ">=3.10"
+dependencies = ["kubernetes==36.0.3"]
+
+[project.scripts]
+kubernetes-configmap-read = "kubernetes_configmap_reader.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

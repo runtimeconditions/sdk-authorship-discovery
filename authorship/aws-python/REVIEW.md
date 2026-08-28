@@ -16,7 +16,7 @@ The implementation supports a credible candidate architecture with five defining
 4. Static metadata ships with its owning SDK artifact, or with a version-aligned companion artifact, and can be discovered without importing or executing the SDK.
 5. Routine releases should regenerate automatically. Changes that may alter Runtime Condition meaning must stop with a focused maintainer review rather than being accepted silently.
 
-The proof establishes first-time generation, package integration, recursive discovery, source validation, unchanged application behavior, authoritative extension maintenance, historical SDK replay, and ongoing SDK release observation for one real dependency graph. It does not yet establish maintainer acceptance, a cross-language standard, profiler consumption, or official artifact publication.
+The proof establishes first-time generation, package integration, recursive discovery, source validation, unchanged application behavior, authoritative extension maintenance, historical SDK replay, ongoing SDK release observation, and real Python profiler consumption for one dependency graph. It does not yet establish maintainer acceptance, a cross-language standard, or official artifact publication.
 
 ## Product constraints
 
@@ -113,10 +113,10 @@ The index identifies the owning distribution, exact installed version, mapping i
 | Observe ongoing upstream releases and accepted extension semantic changes | Implemented through a scheduled workflow with durable evidence and focused review routing |
 | Classify extension drift, SDK drift, and automation failure separately | Implemented and exercised through both maintenance lanes |
 | Publish official or community mapping artifacts continuously | Not implemented |
-| Consume the mapping in a language profiler | Not implemented |
+| Consume the mapping in a language profiler | Proved across seven unchanged applications, including nested owner mappings and deliberately unresolved dynamic selection |
 | Establish a cross-language mapping standard | Not decided |
 
-The packaging baseline used official boto3 1.43.70, botocore 1.43.70, and s3transfer 0.19.2 source. The generated YAML metadata added 10,238 compressed bytes across the three wheels. The first ongoing observation then resolved and fully validated boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 against the same extension release with no semantic mapping change. No profiler was modified.
+The current packaging proof used official boto3 1.43.70, botocore 1.43.70, and s3transfer 0.19.2 source. Paired Python 3.12 builds of the same unmodified and mapped source measured a 10,441-byte compressed increase across the three wheels, including the generated semantic-digest fields. The full registry-free run passed 49 stages: generation and graph validation, three wheel builds, clean installed discovery, runtime and dependency checks, seven application test suites, seven real profiler invocations, and seven semantic YAML profile comparisons. The first hosted ongoing observation resolved and fully validated boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 against the same extension release with no semantic mapping change, but that run predates the newly added profiler gate. The consumer behavior and limits are reviewed in [`results/profiler-integration.md`](results/profiler-integration.md).
 
 The evidence is recorded in [`results/2026-08-14-owner-aligned-packaging-rehearsal.md`](results/2026-08-14-owner-aligned-packaging-rehearsal.md).
 
@@ -128,7 +128,7 @@ The existing tools already accept source models, source trees, versions, reviewe
 
 The historical and ongoing control planes obtain immutable tags, derive and validate source versions, check the selected dependency tuple against source declarations, regenerate and validate owner mappings, classify the release, optionally build and install the owner graph, run application fixtures, and emit machine-readable and maintainer-facing reports. Exact SDK versions are derived from source and remain enforced in generated metadata, staging, and installed discovery; they are not handwritten semantic-overlay changes.
 
-What remains missing is an official or community publication path, evidence across a genuine SDK semantic interruption, independent observation of packages that cannot participate in a valid boto3-rooted graph, maintainer feedback, and profiler consumption. The observer creates a focused pull request containing evidence and state for automatic or review-required outcomes and a deduplicated issue for review-required or invalid outcomes. It never silently approves new Runtime Condition semantics.
+What remains missing is an official or community publication path, evidence across a genuine SDK semantic interruption, independent observation of packages that cannot participate in a valid boto3-rooted graph, and maintainer feedback. The observer creates a focused pull request containing evidence and state for automatic or review-required outcomes and a deduplicated issue for review-required or invalid outcomes. It never silently approves new Runtime Condition semantics.
 
 ### SDK-owned automation
 
@@ -220,8 +220,9 @@ The repeatable release-maintenance runner, manually triggered historical workflo
 4. Validates source surfaces, recursive references, package staging, and representative resolutions.
 5. Compares the new release with the last accepted mapping inputs and outputs.
 6. Classifies the result as `automatic`, `extension-review-required`, `sdk-review-required`, or `invalid`.
-7. Produces a concise Markdown review report containing the affected authored inputs, upstream source/model changes, counts, digests, diagnostics, and representative traces.
-8. Emits deterministic artifacts suitable for a pull request or release job.
+7. Builds all seven acceptance profiles through an explicit Python profiler revision and compares their YAML semantics with the accepted application results.
+8. Produces a concise Markdown review report containing the affected authored inputs, upstream source/model changes, counts, digests, diagnostics, representative traces, and profile comparison results.
+9. Emits deterministic artifacts suitable for a pull request or release job.
 
 ### Initial historical result
 
@@ -231,7 +232,7 @@ This result demonstrates a zero-touch routine-release path but does not test a g
 
 ### First ongoing result
 
-On 2026-08-25 the resolver found boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 from official tags and boto3's declared ranges. All semantic, source, recursive graph, packaging, installed-discovery, runtime-surface, dependency, and seven application-fixture gates passed. The three mappings were semantically unchanged apart from their owner versions, so the observation was classified `automatic` and recorded under [`../../evidence/aws-python/ongoing`](../../evidence/aws-python/ongoing/).
+On 2026-08-25 the resolver found boto3 1.43.79, botocore 1.43.79, and s3transfer 0.19.2 from official tags and boto3's declared ranges. All semantic, source, recursive graph, packaging, installed-discovery, runtime-surface, dependency, and seven application-fixture gates passed. The three mappings were semantically unchanged apart from their owner versions, so the observation was classified `automatic` and recorded under [`../../evidence/aws-python/ongoing`](../../evidence/aws-python/ongoing/). That hosted run predates the profiler acceptance gate now included in future full observations.
 
 For each release, record:
 
@@ -254,7 +255,7 @@ The milestone succeeds only if:
 - the application experience remains unchanged;
 - the release report is understandable enough to use in an SDK maintainer interview.
 
-After the scheduled workflows produce clean hosted evidence and at least one genuine SDK review event, the measured reports should be taken to boto3, botocore, and s3transfer maintainers to test whether the burden and diagnostics are acceptable. Only after that feedback should the cross-language contract be revised or frozen for a first profiler-consumption prototype.
+After the scheduled workflows produce clean hosted evidence and at least one genuine SDK review event, the measured reports and profiler integration should be taken to boto3, botocore, and s3transfer maintainers to test whether the burden, diagnostics, and consumer interpretation are acceptable. The current profiler is an implementation probe; the cross-language contract should not be frozen until that feedback and the remaining SDK cohort challenge it.
 
 ## Decisions intentionally deferred
 
@@ -262,7 +263,7 @@ After the scheduled workflows produce clean hosted evidence and at least one gen
 - The governance and precedence rules when SDK-owned and community mappings both exist.
 - The final cross-language vocabulary for recursive calls, receiver state, and execution paths.
 - The portable predicate language needed when a wrapper can select multiple runtime paths.
-- Profiler behavior when application source cannot prove a mapping branch.
+- General profiler behavior when application source cannot prove a mapping branch beyond the explicit dynamic-service omission and the approved experiment-specific managed-upload widening decision.
 - Expansion to other AWS services and other programming languages.
 - Scaling the working external Smithy compiler from S3 to all services and integrating with AWS's internal Smithy/SDK generators, tracked in [`../../../todos/aws-smithy-all-services-generator.md`](../../../todos/aws-smithy-all-services-generator.md).
 
@@ -272,7 +273,8 @@ After the scheduled workflows produce clean hosted evidence and at least one gen
 2. Review the concrete SDK-author instructions in [`../../../extensions/aws-s3/docs/sdk-author-workflow.md`](../../../extensions/aws-s3/docs/sdk-author-workflow.md).
 3. Review the candidate consumer and packaging contract in [`mapping-contract.md`](mapping-contract.md).
 4. Review the three human-authored overlays under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/) to judge their burden.
-5. Review the measured proof in [`results/2026-08-14-owner-aligned-packaging-rehearsal.md`](results/2026-08-14-owner-aligned-packaging-rehearsal.md).
+5. Review the profiler behavior and boundaries in [`results/profiler-integration.md`](results/profiler-integration.md).
+6. Review the earlier measured package proof in [`results/2026-08-14-owner-aligned-packaging-rehearsal.md`](results/2026-08-14-owner-aligned-packaging-rehearsal.md).
 6. Consult S3-specific design and validation documents only where needed to verify a claim.
 7. Finish with the maintainer questions and design red lines in [`../../docs/sdk-author-experience.md`](../../docs/sdk-author-experience.md).
 

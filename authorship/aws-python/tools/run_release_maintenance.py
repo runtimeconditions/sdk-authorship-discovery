@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import difflib
 import hashlib
 import importlib.util
 import json
@@ -258,6 +259,74 @@ def artifact_record(path: Path, baseline: Path | None) -> dict[str, Any]:
     return record
 
 
+def validate_generated_profile(
+    result: dict[str, Any],
+    fixture: str,
+    generated: Path,
+    expected: Path,
+) -> None:
+    stage = f"compare-profiler-profile-{fixture}"
+    started = time.monotonic()
+    if not expected.is_file():
+        raise StageFailure(
+            stage,
+            "invalid",
+            "expected-profiler-profile-missing",
+            f"expected profile does not exist: {expected}",
+        )
+    try:
+        generated_document = read_document(generated)
+        expected_document = read_document(expected)
+    except Exception as error:
+        raise StageFailure(
+            stage,
+            "invalid",
+            "profiler-profile-invalid",
+            f"{type(error).__name__}: {error}",
+        ) from error
+
+    matches = generated_document == expected_document
+    duration = round(time.monotonic() - started, 3)
+    result["stages"].append(
+        {
+            "name": stage,
+            "status": "passed" if matches else "failed",
+            "durationSeconds": duration,
+            "command": f"compare YAML documents {generated} {expected}",
+            "cwd": None,
+            "exitCode": 0 if matches else 1,
+            "stdout": "",
+            "stderr": "",
+        }
+    )
+    result["artifacts"]["profiles"].append(
+        {
+            "fixture": fixture,
+            "path": str(generated),
+            "bytes": generated.stat().st_size,
+            "sha256": sha256(generated),
+            "expectedPath": str(expected),
+            "expectedSha256": sha256(expected),
+            "semanticMatch": matches,
+        }
+    )
+    if not matches:
+        difference = "".join(
+            difflib.unified_diff(
+                expected.read_text(encoding="utf-8").splitlines(keepends=True),
+                generated.read_text(encoding="utf-8").splitlines(keepends=True),
+                fromfile=str(expected),
+                tofile=str(generated),
+            )
+        )
+        raise StageFailure(
+            stage,
+            "invalid",
+            "profiler-profile-drift",
+            difference or "generated and expected YAML documents differ semantically",
+        )
+
+
 def render_report(result: dict[str, Any]) -> str:
     release = result["release"]
     lines = [
@@ -295,7 +364,7 @@ def render_report(result: dict[str, Any]) -> str:
         "| Input | Commit | Dirty during run |",
         "| --- | --- | --- |",
     ])
-    for name in ("sdk", "extensions"):
+    for name in ("sdk", "extensions", "profiler"):
         revision = result.get("revisions", {}).get(name, {})
         lines.append(f"| {name} | `{revision.get('commit') or 'unavailable'}` | {revision.get('dirty')} |")
 
@@ -315,6 +384,18 @@ def render_report(result: dict[str, Any]) -> str:
             baseline = artifact.get("baseline", {})
             changed = baseline.get("semanticChanged", "not compared")
             lines.append(f"| {package} | {artifact['bytes']} | {changed} | `{artifact['sha256']}` |")
+
+    profiles = result.get("artifacts", {}).get("profiles", [])
+    if profiles:
+        lines.extend([
+            "",
+            "## Profiler acceptance profiles",
+            "",
+            "| Application | Semantic match | SHA-256 |",
+            "| --- | --- | --- |",
+        ])
+        for profile in profiles:
+            lines.append(f"| {profile['fixture']} | {profile['semanticMatch']} | `{profile['sha256']}` |")
 
     lines.extend([
         "",
@@ -394,6 +475,8 @@ def run(args: argparse.Namespace) -> int:
     if not extension_root.is_dir():
         raise ValueError(f"extension source does not exist: {extension_root}")
     source_cache = args.source_cache.resolve()
+    profiler_root = args.profiler_root.resolve() if args.profiler_root else None
+    profiler_command = Path(sys.executable).with_name("runtimeconditions-python-profiler")
     run_work = args.work_root.resolve() / release["id"]
     checkout_root = run_work / "sources"
     if run_work.exists():
@@ -412,10 +495,11 @@ def run(args: argparse.Namespace) -> int:
         "revisions": {
             "sdk": git_revision(sdk_root),
             "extensions": git_revision(extensions_root),
+            "profiler": git_revision(profiler_root) if profiler_root else {"commit": None, "dirty": None},
         },
         "sources": {},
         "stages": [],
-        "artifacts": {"mappings": {}, "wheels": []},
+        "artifacts": {"mappings": {}, "wheels": [], "profiles": []},
         "manualReview": {
             "requested": False,
             "reasonCodes": [],
@@ -429,9 +513,23 @@ def run(args: argparse.Namespace) -> int:
 
     try:
         if not args.static_only:
+            if profiler_root is None or not (profiler_root / "profiler.py").is_file():
+                raise StageFailure(
+                    "verify-profiler-source",
+                    "invalid",
+                    "profiler-source-missing",
+                    "a full maintenance run requires --profiler-root pointing to the Python profiler source repository",
+                )
+            if not profiler_command.is_file():
+                raise StageFailure(
+                    "verify-profiler-command",
+                    "invalid",
+                    "profiler-command-missing",
+                    f"a full maintenance run requires the installed profiler command at {profiler_command}",
+                )
             missing_prerequisites = [
                 module
-                for module in ("setuptools", "wheel", "packaging", "jmespath", "dateutil", "urllib3", "six")
+                for module in ("setuptools", "wheel", "packaging", "jmespath", "dateutil", "urllib3", "six", "yaml", "jsonschema")
                 if importlib.util.find_spec(module) is None
             ]
             if missing_prerequisites:
@@ -734,6 +832,52 @@ def run(args: argparse.Namespace) -> int:
                     failure_reason="application-regression",
                 )
 
+            profiler_proof = experiment.get("profilerProof", {})
+            expected_profiles = sdk_root / profiler_proof["expectedProfiles"]
+            generated_profiles = output / "artifacts" / "profiles"
+            generated_profiles.mkdir(parents=True)
+            extension_version = read_document(mapping_paths["botocore"])["extension"]["version"]
+            extension_release = extension_root / "releases" / str(extension_version)
+            if not (extension_release / "runtimeconditions.extension.yaml").is_file():
+                raise StageFailure(
+                    "resolve-profiler-extension",
+                    "invalid",
+                    "profiler-extension-release-missing",
+                    f"generated botocore mapping targets extension {extension_version}, but no release exists at {extension_release}",
+                )
+            profiler_env = verification_env.copy()
+            profiler_env["PYTHONPATH"] = os.pathsep.join(
+                [str(profiler_root), str(verification), profiler_env.get("PYTHONPATH", "")]
+            ).rstrip(os.pathsep)
+            for project_value in experiment.get("applicationTests", []):
+                project = sdk_root / project_value
+                fixture = project.name
+                generated_profile = generated_profiles / f"{fixture}.yaml"
+                expected_profile = expected_profiles / f"{fixture}.yaml"
+                execute(
+                    result,
+                    f"generate-profiler-profile-{fixture}",
+                    [
+                        str(profiler_command),
+                        "generate",
+                        "--project",
+                        str(project),
+                        "--package-path",
+                        str(extension_release),
+                        "--name",
+                        f"{profiler_proof['profileNamePrefix']}{fixture}",
+                        "--workload-uri",
+                        f"{profiler_proof['workloadRepositoryUri'].rstrip('/')}/{project_value}",
+                        "--workload-version",
+                        str(profiler_proof["workloadVersion"]),
+                        "--out",
+                        str(generated_profile),
+                    ],
+                    env=profiler_env,
+                    failure_reason="profiler-integration-failure",
+                )
+                validate_generated_profile(result, fixture, generated_profile, expected_profile)
+
         result["classification"] = "automatic"
     except StageFailure as error:
         result["classification"] = error.classification
@@ -772,6 +916,7 @@ def main() -> None:
     release.add_argument("--release")
     release.add_argument("--release-file", type=Path)
     parser.add_argument("--extensions-root", type=Path, required=True)
+    parser.add_argument("--profiler-root", type=Path)
     parser.add_argument("--source", type=source_override, action="append", default=[])
     parser.add_argument("--source-cache", type=Path, default=Path(".work/maintenance-source-cache"))
     parser.add_argument("--work-root", type=Path, default=Path(".work/maintenance"))

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import sys
 from importlib import metadata
 from pathlib import Path
@@ -20,6 +21,11 @@ MAPPING_KIND = "RuntimeConditionsSDKMapping"
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def semantic_sha256(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def walk(value: Any) -> Iterable[dict[str, Any]]:
@@ -82,6 +88,8 @@ class Registry:
                 raise ValueError(f"{relative}: mapping distribution does not match index")
             if mapping_metadata.get("distributionVersion") != distribution.version:
                 raise ValueError(f"{relative}: mapping version does not match installed version")
+            if mapping_metadata.get("semanticSha256") != semantic_sha256({"operations": mapping.get("operations", []), "python": mapping.get("python", {})}):
+                raise ValueError(f"{relative}: mapping semantic digest does not match mapping body")
             key = (name, mapping_name)
             if key in self.mappings:
                 raise ValueError(f"duplicate SDK mapping: {key}")

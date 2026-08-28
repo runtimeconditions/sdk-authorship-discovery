@@ -39,9 +39,10 @@ metadata:
   distributionVersion: 1.43.70
   language: python
   service: s3
+  semanticSha256: 0e7942c78cf4d835f8189e62597d907a311422852b929d7fa2c85fcb2a3a8804
 ```
 
-`apiVersion` versions the mapping document schema. `metadata.distributionVersion` identifies the exact SDK artifact that owns its public bindings. Neither is the semantic version of an extension.
+`apiVersion` versions the mapping document schema. `metadata.distributionVersion` identifies the exact SDK artifact that owns its public bindings. Neither is the semantic version of an extension. `metadata.semanticSha256` is deterministically calculated from the generated `operations` and language body; staging, installed discovery, graph validation, and profiler consumption recompute it rather than trusting the recorded value.
 
 ## Dependencies
 
@@ -128,7 +129,7 @@ When behavior depends on state supplied during object construction, a method bin
 
 A logical call may have multiple implementations and mutually exclusive paths. `selection` is a human-reviewable semantic description, not an instruction for a profiler to guess a branch. `when` and `whenAll` preserve predicates on optional follow-up calls. `usage` distinguishes always-on-path, one-or-more, zero-or-more, and failure-recovery calls.
 
-These are behavioral facts about the SDK. They are not emitted profile fields, coverage metrics, or unresolved observations. If static analysis cannot select a path or prove a predicate, the profiler and its caller decide whether to omit, widen, warn, request a no-op declaration, or apply another policy.
+These are behavioral facts about the SDK. They are not emitted profile fields, coverage metrics, or unresolved observations. If static analysis cannot select a path or prove a predicate, the profiler and its caller decide whether to omit, widen, warn, request a no-op declaration, or apply another policy. The current Python managed-upload fixture widens within one proven S3 bucket condition to every operation reachable through the mapped classic, CRT, single-part, multipart-success, and failure-recovery paths; this is an explicit experiment policy rather than a universal mapping rule.
 
 ## Extension boundary
 

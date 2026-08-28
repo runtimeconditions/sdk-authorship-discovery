@@ -1,0 +1,19 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: kubernetes-pod-watcher
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/kubernetes/python/pod-watcher
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/kubernetes-api/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: kubernetes
+  interface:
+    type: api
+    operations:
+    - verb: watch
+      apiGroup: ''
+      apiVersion: v1
+      resource: pods
+      scope: namespaced

@@ -1,0 +1,76 @@
+schemaVersion: 1
+experiment: kubernetes-python-release-replay
+mode: retrospective-compatibility
+method:
+  baseline: The integration generator was developed against Kubernetes Python v36.0.3 and then replayed backward against v36.0.0 through v36.0.3.
+  scope: The replay records final compatibility and maintenance encountered during replay. The substantial first-integration work needed to create the projection, mapping, packaging, and verification pipeline is documented by the authorship project but is not counted as recurring release maintenance.
+  limitation: This method establishes compatibility of the final generator with historical releases but does not reproduce the order or effort of a production integration maintained as each release occurred.
+targetExtension:
+  id: https://runtimeconditions.io/extensions/kubernetes-api/0.1.0/runtimeconditions.extension.yaml
+  version: 0.1.0
+  semanticSha256: b051163962d807642703a6626f1f9297de6681fb5773182c50e3dbde1774d62e
+releases:
+- tag: v36.0.0
+  revision: 97290c49c18ca84c831068ddb887092353719b3f
+  version: 36.0.0
+  finalReplayResult: compatible-with-current-generator
+  authoritativeModelSemanticSha256: ca58855c8fe1774f8859e957ec94ebb41b016ea726e986f166460eefce488cfd
+  generatorInputSemanticSha256: 6df0f8c041370f2bd133a3fe8dce763e8e89dbffa84ee81b45401d32203a58e8
+  surfaceSemanticSha256: 10d274cc1f94dc91cb0a0880741fbd15417d2dcd036ab4456357f9043370dcbb
+  mappingSemanticSha256: 6a10c4d2d1ba191f0b9faa1a6b1a0106ca1fe74f36086b600abadf98867a7a20
+  operationRecords: 936
+  publicSymbols: 937
+  syncSymbols: 936
+  asyncSymbols: 0
+- tag: v36.0.1
+  revision: a05fe9e81363ca5ecea656eb6898f059f7a9a60a
+  version: 36.0.1
+  finalReplayResult: compatible-with-current-generator
+  authoritativeModelSemanticSha256: ca58855c8fe1774f8859e957ec94ebb41b016ea726e986f166460eefce488cfd
+  generatorInputSemanticSha256: 6df0f8c041370f2bd133a3fe8dce763e8e89dbffa84ee81b45401d32203a58e8
+  surfaceSemanticSha256: 9fbe1f58b30458c33b983bc3a108409a69dd163d7b20d89399773685ac30d533
+  mappingSemanticSha256: 55d73f8b70575d753c115c6ed4c637796a91ba1050ed151792c051027025b212
+  operationRecords: 936
+  publicSymbols: 1873
+  syncSymbols: 936
+  asyncSymbols: 936
+- tag: v36.0.2
+  revision: 1f2df0359a6f48c20581ccc5f120105b3e99f07f
+  version: 36.0.2
+  finalReplayResult: compatible-with-current-generator
+  authoritativeModelSemanticSha256: ca58855c8fe1774f8859e957ec94ebb41b016ea726e986f166460eefce488cfd
+  generatorInputSemanticSha256: 6df0f8c041370f2bd133a3fe8dce763e8e89dbffa84ee81b45401d32203a58e8
+  surfaceSemanticSha256: 9fbe1f58b30458c33b983bc3a108409a69dd163d7b20d89399773685ac30d533
+  mappingSemanticSha256: 55d73f8b70575d753c115c6ed4c637796a91ba1050ed151792c051027025b212
+  operationRecords: 936
+  publicSymbols: 1873
+  syncSymbols: 936
+  asyncSymbols: 936
+- tag: v36.0.3
+  revision: 67e7d9abfc6fe6629fa650d9b0abf4c99ef8c39c
+  version: 36.0.3
+  finalReplayResult: compatible-with-current-generator
+  authoritativeModelSemanticSha256: ca58855c8fe1774f8859e957ec94ebb41b016ea726e986f166460eefce488cfd
+  generatorInputSemanticSha256: 6df0f8c041370f2bd133a3fe8dce763e8e89dbffa84ee81b45401d32203a58e8
+  surfaceSemanticSha256: 2520e9db446efe3a5c2390f4e85429d25ea41264f3ff154107f6c18fbc4cb964
+  mappingSemanticSha256: 55d73f8b70575d753c115c6ed4c637796a91ba1050ed151792c051027025b212
+  operationRecords: 936
+  publicSymbols: 1873
+  syncSymbols: 936
+  asyncSymbols: 936
+observedMaintenance:
+- id: discover-available-generated-flavors
+  observedAtRelease: v36.0.0
+  initialResult: automation-repair-required
+  maintenanceKind: integration-tooling
+  description: The initial retrospective replay rejected v36.0.0 because the projection required both synchronous and asynchronous generated API directories, while that release contained only the synchronous flavor. The generator was changed to discover and validate the flavors present in each release.
+  authoredComponent: authorship/kubernetes-python/tools/project_surface.py
+  semanticMappingEdits: 0
+  productionInterpretation: This was real authored integration work, not an SDK semantic annotation change. In an upstream integration, SDK maintainers would still need to review and ship the change even if Runtime Conditions contributors supplied it. Because the experiment began at v36.0.3 and replayed backward, it does not establish exactly when a chronological production integration would have encountered the issue.
+summary:
+  releases: 4
+  compatibleWithCurrentGenerator: 4
+  incompatibleWithCurrentGenerator: 0
+  observedAutomationRepairs: 1
+  observedSemanticMappingEdits: 0
+  generatedFlavorTransitions: 1
