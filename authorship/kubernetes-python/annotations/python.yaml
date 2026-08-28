@@ -1,0 +1,26 @@
+apiVersion: runtimeconditions.io/sdk-authoring/v1alpha1
+kind: RuntimeConditionsPythonSDKAnnotations
+metadata:
+  distribution: kubernetes
+python:
+  conditionDelegations:
+  - id: watch-stream
+    symbols:
+    - module: kubernetes.watch.watch
+      class: Watch
+      method: stream
+    delegate:
+      callableArgument:
+        position: 0
+        keyword: func
+      forwardedArguments:
+        positional:
+          fromPosition: 1
+        keywords: true
+      activateTargetConditionals:
+      - argument:
+          keyword: watch
+        equals: true
+      - argument:
+          keyword: follow
+        equals: true

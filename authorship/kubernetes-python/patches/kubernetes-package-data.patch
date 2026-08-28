@@ -1,0 +1,15 @@
+diff --git a/setup.py b/setup.py
+index 5c85181..bf42573 100644
+--- a/setup.py
++++ b/setup.py
+@@ -68,6 +68,10 @@ setup(
+               'kubernetes.informer',
+               ],
+     include_package_data=True,
++    package_data={
++        'kubernetes': ['runtimeconditions/index.yaml',
++                       'runtimeconditions/mappings/*.yaml'],
++    },
+     long_description="Python client for kubernetes http://kubernetes.io/",
+     python_requires='>=3.10',
+     classifiers=[

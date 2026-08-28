@@ -33,6 +33,12 @@ applicationTests:
 - s3/python/resource-api
 - s3/python/dynamic-service
 - s3/python/managed-transfer
+profilerProof:
+  repository: https://github.com/runtimeconditions/python-rc-profiler.git
+  expectedProfiles: authorship/aws-python/results/profiles
+  profileNamePrefix: aws-s3-
+  workloadRepositoryUri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main
+  workloadVersion: 0.1.0
 releases:
 - id: historical-1.43.61
   boto3: 1.43.61

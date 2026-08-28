@@ -42,6 +42,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", type=Path, required=True)
     parser.add_argument("--extensions-root", type=Path, required=True)
+    parser.add_argument("--profiler-root", type=Path)
     parser.add_argument("--release", action="append", default=[])
     parser.add_argument("--source-cache", type=Path, default=Path(".work/maintenance-source-cache"))
     parser.add_argument("--work-root", type=Path, default=Path(".work/maintenance"))
@@ -79,6 +80,8 @@ def main() -> None:
             "--output",
             str(args.output / release_id),
         ]
+        if args.profiler_root:
+            command.extend(["--profiler-root", str(args.profiler_root)])
         if args.static_only:
             command.append("--static-only")
         completed = subprocess.run(command, check=False)

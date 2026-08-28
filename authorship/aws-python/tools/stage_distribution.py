@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import shutil
 from pathlib import Path
@@ -21,6 +22,11 @@ VERSION_PATTERN = re.compile(r'''__version__\s*=\s*['"]([^'"]+)['"]''')
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def semantic_sha256(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def source_version(source: Path, relative_version_file: Path) -> str:
@@ -55,6 +61,7 @@ def validate_mapping(mapping: dict[str, Any], distribution: str, version: str) -
     require(metadata.get("distribution"), distribution, "mapping distribution")
     require(metadata.get("distributionVersion"), version, "mapping distribution version")
     require(metadata.get("language"), "python", "mapping language")
+    require(metadata.get("semanticSha256"), semantic_sha256({"operations": mapping.get("operations", []), "python": mapping.get("python", {})}), "mapping semantic digest")
     for field in ("name", "service"):
         if not isinstance(metadata.get(field), str) or not metadata[field]:
             raise ValueError(f"mapping metadata.{field} must be a non-empty string")

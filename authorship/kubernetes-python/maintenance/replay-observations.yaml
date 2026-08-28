@@ -1,0 +1,16 @@
+schemaVersion: 1
+experiment: kubernetes-python-release-replay
+mode: retrospective-compatibility
+method:
+  baseline: The integration generator was developed against Kubernetes Python v36.0.3 and then replayed backward against v36.0.0 through v36.0.3.
+  scope: The replay records final compatibility and maintenance encountered during replay. The substantial first-integration work needed to create the projection, mapping, packaging, and verification pipeline is documented by the authorship project but is not counted as recurring release maintenance.
+  limitation: This method establishes compatibility of the final generator with historical releases but does not reproduce the order or effort of a production integration maintained as each release occurred.
+observations:
+- id: discover-available-generated-flavors
+  observedAtRelease: v36.0.0
+  initialResult: automation-repair-required
+  maintenanceKind: integration-tooling
+  description: The initial retrospective replay rejected v36.0.0 because the projection required both synchronous and asynchronous generated API directories, while that release contained only the synchronous flavor. The generator was changed to discover and validate the flavors present in each release.
+  authoredComponent: authorship/kubernetes-python/tools/project_surface.py
+  semanticMappingEdits: 0
+  productionInterpretation: This was real authored integration work, not an SDK semantic annotation change. In an upstream integration, SDK maintainers would still need to review and ship the change even if Runtime Conditions contributors supplied it. Because the experiment began at v36.0.3 and replayed backward, it does not establish exactly when a chronological production integration would have encountered the issue.

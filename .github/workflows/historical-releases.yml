@@ -8,12 +8,17 @@ on:
         required: true
         default: main
         type: string
+      profiler_ref:
+        description: Immutable runtimeconditions/python-rc-profiler commit or review ref
+        required: true
+        default: main
+        type: string
       releases:
         description: Optional comma-separated release IDs from experiment.yaml; blank runs all configured releases
         required: false
         type: string
       validation_level:
-        description: Run static gates only or the full package and application proof
+        description: Run static gates only or the full package, application, and profiler proof
         required: true
         default: full
         type: choice
@@ -42,6 +47,14 @@ jobs:
           ref: ${{ inputs.extensions_ref }}
           path: extensions
 
+      - name: Check out Python profiler consumer
+        if: ${{ inputs.validation_level != 'static' }}
+        uses: actions/checkout@v6
+        with:
+          repository: runtimeconditions/python-rc-profiler
+          ref: ${{ inputs.profiler_ref }}
+          path: python-profiler
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -49,6 +62,10 @@ jobs:
 
       - name: Install build and runtime prerequisites
         run: python -m pip install --disable-pip-version-check -r sdk/authorship/aws-python/requirements.txt
+
+      - name: Install Python profiler consumer
+        if: ${{ inputs.validation_level != 'static' }}
+        run: python -m pip install --disable-pip-version-check --no-deps --no-build-isolation --editable ./python-profiler
 
       - name: Select configured releases
         id: selection
@@ -69,6 +86,8 @@ jobs:
           fi
           if [[ "$VALIDATION_LEVEL" == "static" ]]; then
             arguments+=(--static-only)
+          else
+            arguments+=(--profiler-root python-profiler)
           fi
           : > "$RUNNER_TEMP/replay-arguments"
           if (( ${#arguments[@]} )); then

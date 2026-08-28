@@ -10,8 +10,13 @@ on:
         required: true
         default: main
         type: string
+      profiler_ref:
+        description: Immutable runtimeconditions/python-rc-profiler commit or review ref
+        required: true
+        default: main
+        type: string
       validation_level:
-        description: Run static gates only or the full package and application proof
+        description: Run static gates only or the full package, application, and profiler proof
         required: true
         default: full
         type: choice
@@ -46,6 +51,14 @@ jobs:
           ref: ${{ inputs.extensions_ref || 'main' }}
           path: extensions
 
+      - name: Check out Python profiler consumer
+        if: ${{ inputs.validation_level != 'static' }}
+        uses: actions/checkout@v6
+        with:
+          repository: runtimeconditions/python-rc-profiler
+          ref: ${{ inputs.profiler_ref || 'main' }}
+          path: python-profiler
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -53,6 +66,10 @@ jobs:
 
       - name: Install build and runtime prerequisites
         run: python -m pip install --disable-pip-version-check -r sdk/authorship/aws-python/requirements.txt
+
+      - name: Install Python profiler consumer
+        if: ${{ inputs.validation_level != 'static' }}
+        run: python -m pip install --disable-pip-version-check --no-deps --no-build-isolation --editable ./python-profiler
 
       - name: Resolve the newest compatible owner graph
         id: candidate
@@ -71,6 +88,7 @@ jobs:
         if: steps.candidate.outputs.available == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           OBSERVATION_ID: ${{ steps.candidate.outputs.id }}
         run: |
           branch="automation/aws-python-s3-$OBSERVATION_ID"
@@ -88,6 +106,8 @@ jobs:
           arguments=()
           if [[ "$VALIDATION_LEVEL" == "static" ]]; then
             arguments+=(--static-only)
+          else
+            arguments+=(--profiler-root python-profiler)
           fi
           python sdk/authorship/aws-python/tools/run_release_maintenance.py \
             --experiment sdk/maintenance/aws-python-s3/experiment.yaml \
@@ -118,6 +138,7 @@ jobs:
         working-directory: sdk
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           OBSERVATION_ID: ${{ steps.candidate.outputs.id }}
           CLASSIFICATION: ${{ steps.result.outputs.classification }}
           REPORT: evidence/aws-python/ongoing/${{ steps.candidate.outputs.id }}/report.md
@@ -145,6 +166,7 @@ jobs:
         if: steps.result.outputs.classification == 'extension-review-required' || steps.result.outputs.classification == 'sdk-review-required' || steps.result.outputs.classification == 'invalid'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           CLASSIFICATION: ${{ steps.result.outputs.classification }}
           OBSERVATION_ID: ${{ steps.candidate.outputs.id }}
           REPORT: maintenance-evidence/${{ steps.candidate.outputs.id }}/report.md
