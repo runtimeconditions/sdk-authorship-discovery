@@ -31,6 +31,7 @@ The complete transformed generator input joins statically to both generated Pyth
 - Methods exposing a `watch` argument: 132
 - Statically derived list-to-watch conditional projections: 129
 - Source-verified handwritten condition delegations: 1
+- Source-verified stateful resource flows: 1
 
 ## Representative join
 
@@ -40,8 +41,8 @@ The complete transformed generator input joins statically to both generated Pyth
 
 The 908 generated endpoint mappings and 1872 generated public symbols require no handwritten method table. The generator or adjacent build step can emit them from the retained processed model and generated source verification. Reused transformed operation IDs confirm that endpoint plus owning class must remain part of SDK identity.
 
-The focused SDK-owned semantic surface contains 27 distinct custom-resource method records, 1 API-discovery method record, 1 source-verified handwritten condition delegation, and any future wrappers or aliases absent from the processed model. These records must not collapse into one operation with combinatorial verb, scope, or subresource choices: each public SDK method determines one fixed base verb, scope, and optional subresource, while the 3 list methods have one explicit source-proven `watch=true` override and only resource coordinates such as group, version, and plural resource bind from method arguments. `Watch.stream` contributes no standalone Kubernetes condition; it delegates to the mapped callable and activates only a conditional argument declared by that target. A shared generator rule may emit and validate the separate records, but it is not itself an SDK mapping operation. A record must not emit a concrete resource requirement when application source leaves required coordinates unresolved.
+The focused SDK-owned semantic surface contains 27 distinct custom-resource method records, 1 API-discovery method record, 1 source-verified handwritten condition delegation, 1 source-verified stateful resource flow, and any future wrappers or aliases absent from the processed model. These records must not collapse into one operation with combinatorial verb, scope, or subresource choices: each public SDK method determines one fixed base verb, scope, and optional subresource, while the 3 list methods have one explicit source-proven `watch=true` override and only resource coordinates such as group, version, and plural resource bind from method arguments. `Watch.stream` contributes no standalone Kubernetes condition; it delegates to the mapped callable and activates only a conditional argument declared by that target. The stateful flow describes one discovery-produced Resource object and seven source-verified methods; its built-in resource catalog remains deterministic generated data rather than a handwritten SDK table. A record must not emit a concrete resource requirement when application source leaves required coordinates unresolved.
 
-## Next gate
+## Accepted validation boundary
 
-Review the single source-verified `Watch.stream` delegation annotation and its profiler behavior, then investigate whether `DynamicClient` and discovery-created `Resource` state can be represented without broad conditions or per-resource annotations.
+The real-profiler application proof is recorded separately from this source inventory. Literal built-in GVK selectors resolve through the extension-generated authoritative catalog, while an unmodeled CRD remains unresolved unless application source independently proves its plural resource and scope. Dynamic subresources, ResourceList fan-out, and constructor-only discovery traffic remain explicit boundaries.

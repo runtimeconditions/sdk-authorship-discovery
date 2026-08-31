@@ -1,0 +1,39 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: kubernetes-dynamic-configmap-lifecycle
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/kubernetes/python/dynamic-configmap-lifecycle
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/kubernetes-api/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: kubernetes
+  interface:
+    type: api
+    operations:
+    - verb: create
+      apiGroup: ''
+      apiVersion: v1
+      resource: configmaps
+      scope: namespaced
+    - verb: get
+      apiGroup: ''
+      apiVersion: v1
+      resource: configmaps
+      scope: namespaced
+    - verb: list
+      apiGroup: ''
+      apiVersion: v1
+      resource: configmaps
+      scope: namespaced
+    - verb: patch
+      apiGroup: ''
+      apiVersion: v1
+      resource: configmaps
+      scope: namespaced
+    - verb: delete
+      apiGroup: ''
+      apiVersion: v1
+      resource: configmaps
+      scope: namespaced

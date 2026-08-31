@@ -22,10 +22,10 @@ metadata:
       sourceSemanticSha256: ca58855c8fe1774f8859e957ec94ebb41b016ea726e986f166460eefce488cfd
     sdkAnnotations:
       path: python.yaml
-      sha256: f779c1dcbeb0b6edc7778660594ede23248b3b1ebe6d7fd48aec9f0de6fa6920
-      semanticSha256: 5d3fa1faff433013b9d30f248cc0fd5ede71b7a731fb7e09191c4d2ffc56adaf
+      sha256: 58ba9affa82c1bb37c88aeb204d275aabdc2191b5f071084882ae28fd485fac8
+      semanticSha256: c33547471cdae9bdd8004fc2048a22de127ecddc3ca5861fc91a27a97b1139b4
   surfaceCount: 936
-  semanticSha256: 2520e9db446efe3a5c2390f4e85429d25ea41264f3ff154107f6c18fbc4cb964
+  semanticSha256: dd56a8f4dbdb802d3f3dd911fbd46570a68e710d1914c814571c45b4cf2a26d0
   summary:
     classifications:
       authoritative: 908
@@ -39,6 +39,7 @@ metadata:
     watchCapableMethods: 132
     conditionalWatchProjections: 129
     conditionDelegations: 1
+    statefulResourceFlows: 1
 surfaces:
 - generatorOperationId: connectDeleteNamespacedPodProxy
   path: /api/v1/namespaces/{namespace}/pods/{name}/proxy
@@ -31268,3 +31269,102 @@ python:
     sourceProofs:
     - path: kubernetes/watch/watch.py
       sha256: ca3015bc7924fbef2035e12e7c6a895856b21842fac70213f0bed7a56cfca6aa
+  statefulResourceFlows:
+  - id: dynamic-client-resource
+    constructorSymbols:
+    - kubernetes.dynamic.DynamicClient
+    - kubernetes.dynamic.client.DynamicClient
+    producer:
+      memberPath:
+      - resources
+      - get
+      selectorArguments:
+        apiVersion:
+          keyword: api_version
+        group:
+          keyword: group
+        kind:
+          keyword: kind
+      producesState: kubernetes-api-resource
+    methods:
+    - method: get
+      namespaceArgument:
+        position: 1
+        keyword: namespace
+      operations:
+      - when:
+          argument:
+            position: 0
+            keyword: name
+          provided: true
+        verb: get
+        scopeMode: resource
+      - otherwise: true
+        verb: list
+        scopeMode: collection
+    - method: create
+      namespaceArgument:
+        position: 1
+        keyword: namespace
+      operations:
+      - verb: create
+        scopeMode: resource
+    - method: delete
+      namespaceArgument:
+        position: 1
+        keyword: namespace
+      operations:
+      - when:
+          argument:
+            position: 0
+            keyword: name
+          provided: true
+        verb: delete
+        scopeMode: resource
+      - when:
+          any:
+          - argument:
+              position: 3
+              keyword: label_selector
+            provided: true
+          - argument:
+              position: 4
+              keyword: field_selector
+            provided: true
+        verb: deletecollection
+        scopeMode: collection
+    - method: replace
+      namespaceArgument:
+        position: 2
+        keyword: namespace
+      operations:
+      - verb: update
+        scopeMode: resource
+    - method: patch
+      namespaceArgument:
+        position: 2
+        keyword: namespace
+      operations:
+      - verb: patch
+        scopeMode: resource
+    - method: server_side_apply
+      namespaceArgument:
+        position: 2
+        keyword: namespace
+      operations:
+      - verb: patch
+        scopeMode: resource
+    - method: watch
+      namespaceArgument:
+        position: 0
+        keyword: namespace
+      operations:
+      - verb: watch
+        scopeMode: collection
+    sourceProofs:
+    - path: kubernetes/dynamic/client.py
+      sha256: a24f171d1b2e0725e638dbbe8a58fb7ba42d9a947d6f638020feadb484842ea3
+    - path: kubernetes/dynamic/discovery.py
+      sha256: 4773768b26c2d28cbe80609048a0b4d83a2b87d0eed2d2d146d734ce2e10d296
+    - path: kubernetes/dynamic/resource.py
+      sha256: ceb7153c69c106d739415b47ad32d4aabcd6fac5ddd21e8e1cf1133a86350e7e

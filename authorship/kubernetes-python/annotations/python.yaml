@@ -24,3 +24,107 @@ python:
       - argument:
           keyword: follow
         equals: true
+  statefulResourceFlows:
+  - id: dynamic-client-resource
+    constructorSymbols:
+    - kubernetes.dynamic.DynamicClient
+    - kubernetes.dynamic.client.DynamicClient
+    producer:
+      memberPath:
+      - resources
+      - get
+      selectorArguments:
+        apiVersion:
+          keyword: api_version
+        group:
+          keyword: group
+        kind:
+          keyword: kind
+      producesState: kubernetes-api-resource
+    implementation:
+      client:
+        module: kubernetes.dynamic.client
+        class: DynamicClient
+      discoverer:
+        module: kubernetes.dynamic.discovery
+        class: Discoverer
+        method: get
+      resourceProxy:
+        module: kubernetes.dynamic.resource
+        class: Resource
+        method: __getattr__
+    methods:
+    - method: get
+      namespaceArgument:
+        position: 1
+        keyword: namespace
+      operations:
+      - when:
+          argument:
+            position: 0
+            keyword: name
+          provided: true
+        verb: get
+        scopeMode: resource
+      - otherwise: true
+        verb: list
+        scopeMode: collection
+    - method: create
+      namespaceArgument:
+        position: 1
+        keyword: namespace
+      operations:
+      - verb: create
+        scopeMode: resource
+    - method: delete
+      namespaceArgument:
+        position: 1
+        keyword: namespace
+      operations:
+      - when:
+          argument:
+            position: 0
+            keyword: name
+          provided: true
+        verb: delete
+        scopeMode: resource
+      - when:
+          any:
+          - argument:
+              position: 3
+              keyword: label_selector
+            provided: true
+          - argument:
+              position: 4
+              keyword: field_selector
+            provided: true
+        verb: deletecollection
+        scopeMode: collection
+    - method: replace
+      namespaceArgument:
+        position: 2
+        keyword: namespace
+      operations:
+      - verb: update
+        scopeMode: resource
+    - method: patch
+      namespaceArgument:
+        position: 2
+        keyword: namespace
+      operations:
+      - verb: patch
+        scopeMode: resource
+    - method: server_side_apply
+      namespaceArgument:
+        position: 2
+        keyword: namespace
+      operations:
+      - verb: patch
+        scopeMode: resource
+    - method: watch
+      namespaceArgument:
+        position: 0
+        keyword: namespace
+      operations:
+      - verb: watch
+        scopeMode: collection

@@ -210,6 +210,169 @@ def condition_delegations(source_root: Path, annotations_path: Path | None) -> t
     return validated, coordinates
 
 
+def module_source(source_root: Path, module: str) -> Path:
+    path = source_root / Path(*module.split("."))
+    source = path.with_suffix(".py")
+    if source.is_file():
+        return source
+    package = path / "__init__.py"
+    if package.is_file():
+        return package
+    raise ValueError(f"source module is absent: {module}")
+
+
+def method_arguments(function: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+    arguments = [argument.arg for argument in (*function.args.posonlyargs, *function.args.args)]
+    return arguments[1:] if arguments and arguments[0] in {"self", "cls"} else arguments
+
+
+def validate_stateful_resource_flow(source_root: Path, item: dict[str, Any]) -> dict[str, Any]:
+    identifier = item.get("id")
+    constructors = item.get("constructorSymbols")
+    producer = item.get("producer")
+    implementation = item.get("implementation")
+    methods = item.get("methods")
+    if not isinstance(identifier, str) or not identifier:
+        raise ValueError("stateful resource flow id is required")
+    if not isinstance(constructors, list) or not constructors or any(not isinstance(symbol, str) or not symbol for symbol in constructors):
+        raise ValueError(f"{identifier}: constructorSymbols are required")
+    if not isinstance(producer, dict) or producer.get("memberPath") != ["resources", "get"] or not isinstance(producer.get("selectorArguments"), dict) or not isinstance(producer.get("producesState"), str):
+        raise ValueError(f"{identifier}: unsupported state producer")
+    if set(producer["selectorArguments"]) != {"apiVersion", "group", "kind"}:
+        raise ValueError(f"{identifier}: producer must bind API version, group, and kind")
+    if not isinstance(implementation, dict) or not isinstance(methods, list) or not methods:
+        raise ValueError(f"{identifier}: implementation and methods are required")
+
+    source_paths: set[Path] = set()
+    parsed: dict[str, tuple[ast.Module, ast.ClassDef]] = {}
+    for role in ("client", "discoverer", "resourceProxy"):
+        symbol = implementation.get(role)
+        if not isinstance(symbol, dict) or not isinstance(symbol.get("module"), str) or not isinstance(symbol.get("class"), str):
+            raise ValueError(f"{identifier}: invalid {role} implementation symbol")
+        source_path = module_source(source_root, symbol["module"])
+        tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=str(source_path))
+        classes = [node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == symbol["class"]]
+        if len(classes) != 1:
+            raise ValueError(f"{identifier}: expected one {symbol['class']} class in {source_path}")
+        parsed[role] = tree, classes[0]
+        source_paths.add(source_path)
+
+    client_symbol = implementation["client"]
+    _, constructor = class_function(parsed["client"][0], client_symbol["class"], "__init__", module_source(source_root, client_symbol["module"]))
+    if not any(isinstance(node, ast.FunctionDef) and node.decorator_list and any(isinstance(decorator, ast.Name) and decorator.id == "property" for decorator in node.decorator_list) and node.name == "resources" and any(isinstance(child, ast.Return) and isinstance(child.value, ast.Attribute) and child.value.attr == "__discoverer" for child in ast.walk(node)) for node in parsed["client"][1].body):
+        raise ValueError(f"{identifier}: DynamicClient.resources no longer exposes its discoverer")
+    if method_arguments(constructor)[:1] != ["client"]:
+        raise ValueError(f"{identifier}: DynamicClient constructor signature changed")
+
+    discoverer_symbol = implementation["discoverer"]
+    _, discoverer_get = class_function(parsed["discoverer"][0], discoverer_symbol["class"], discoverer_symbol["method"], module_source(source_root, discoverer_symbol["module"]))
+    forwards_search = any(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id == "self" and node.func.attr == "search" and any(keyword.arg is None and isinstance(keyword.value, ast.Name) and keyword.value.id == discoverer_get.args.kwarg.arg for keyword in node.keywords) for node in ast.walk(discoverer_get)) if discoverer_get.args.kwarg else False
+    if not forwards_search:
+        raise ValueError(f"{identifier}: Discoverer.get no longer forwards its selectors to search")
+
+    proxy_symbol = implementation["resourceProxy"]
+    _, proxy = class_function(parsed["resourceProxy"][0], proxy_symbol["class"], proxy_symbol["method"], module_source(source_root, proxy_symbol["module"]))
+    proxy_source = ast.dump(proxy, include_attributes=False)
+    if "Name(id='partial'" not in proxy_source or "attr='client'" not in proxy_source:
+        raise ValueError(f"{identifier}: Resource proxy no longer binds DynamicClient methods")
+    _, path_function = class_function(parsed["resourceProxy"][0], proxy_symbol["class"], "path", module_source(source_root, proxy_symbol["module"]))
+    path_tests = [ast.dump(node.test, include_attributes=False) for node in ast.walk(path_function) if isinstance(node, ast.If)]
+    if not any(test == "Name(id='name', ctx=Load())" for test in path_tests) or not any(test == "BoolOp(op=And(), values=[Attribute(value=Name(id='self', ctx=Load()), attr='namespaced', ctx=Load()), Name(id='namespace', ctx=Load())])" for test in path_tests):
+        raise ValueError(f"{identifier}: Resource.path no longer derives collection and namespaced paths from argument truthiness")
+
+    expected_verbs = {
+        "get": {"get", "list"},
+        "create": {"create"},
+        "delete": {"delete", "deletecollection"},
+        "replace": {"update"},
+        "patch": {"patch"},
+        "server_side_apply": {"patch"},
+        "watch": {"watch"},
+    }
+    seen_methods: set[str] = set()
+    for method in methods:
+        name = method.get("method") if isinstance(method, dict) else None
+        operation_entries = method.get("operations") if isinstance(method, dict) else None
+        if name not in expected_verbs or name in seen_methods or not isinstance(operation_entries, list) or not operation_entries:
+            raise ValueError(f"{identifier}: invalid or duplicate stateful method {name!r}")
+        seen_methods.add(name)
+        if {operation.get("verb") for operation in operation_entries if isinstance(operation, dict)} != expected_verbs[name]:
+            raise ValueError(f"{identifier}: {name} operations differ from source-proven behavior")
+        if name == "get":
+            expected = [
+                {"when": {"argument": {"position": 0, "keyword": "name"}, "provided": True}, "verb": "get", "scopeMode": "resource"},
+                {"otherwise": True, "verb": "list", "scopeMode": "collection"},
+            ]
+            if operation_entries != expected:
+                raise ValueError(f"{identifier}: get branch rules differ from Resource.path behavior")
+        if name == "delete":
+            expected = [
+                {"when": {"argument": {"position": 0, "keyword": "name"}, "provided": True}, "verb": "delete", "scopeMode": "resource"},
+                {
+                    "when": {
+                        "any": [
+                            {"argument": {"position": 3, "keyword": "label_selector"}, "provided": True},
+                            {"argument": {"position": 4, "keyword": "field_selector"}, "provided": True},
+                        ]
+                    },
+                    "verb": "deletecollection",
+                    "scopeMode": "collection",
+                },
+            ]
+            if operation_entries != expected:
+                raise ValueError(f"{identifier}: delete branch rules differ from its required selectors")
+        _, function = class_function(parsed["client"][0], client_symbol["class"], name, module_source(source_root, client_symbol["module"]))
+        arguments = method_arguments(function)
+        if not arguments or arguments[0] != "resource":
+            raise ValueError(f"{identifier}: DynamicClient.{name} no longer receives a resource first")
+        namespace = method.get("namespaceArgument")
+        if not isinstance(namespace, dict) or not isinstance(namespace.get("position"), int) or namespace.get("keyword") != "namespace":
+            raise ValueError(f"{identifier}: {name} namespace binding is invalid")
+        public_arguments = arguments[1:]
+        position = namespace["position"]
+        if position >= len(public_arguments) or public_arguments[position] != "namespace":
+            raise ValueError(f"{identifier}: {name} namespace binding differs from source")
+        if name == "watch":
+            delegated = any(isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "stream" and node.args and isinstance(node.args[0], ast.Attribute) and isinstance(node.args[0].value, ast.Name) and node.args[0].value.id == "resource" and node.args[0].attr == "get" for node in ast.walk(function))
+            if not delegated:
+                raise ValueError(f"{identifier}: DynamicClient.watch no longer delegates to resource.get")
+        else:
+            requests = [node for node in ast.walk(function) if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id == "self" and node.func.attr == "request"]
+            if len(requests) != 1 or not requests[0].args or not isinstance(requests[0].args[0], ast.Constant):
+                raise ValueError(f"{identifier}: DynamicClient.{name} no longer makes one literal request")
+            if name == "delete":
+                function_source = ast.dump(function, include_attributes=False)
+                if not all(f"Name(id='{argument}', ctx=Load())" in function_source for argument in ("name", "label_selector", "field_selector")) or "Raise(" not in function_source:
+                    raise ValueError(f"{identifier}: DynamicClient.delete no longer enforces name or collection selectors")
+    if seen_methods != set(expected_verbs):
+        raise ValueError(f"{identifier}: stateful method inventory is incomplete")
+
+    return {
+        "id": identifier,
+        "constructorSymbols": constructors,
+        "producer": producer,
+        "methods": methods,
+        "sourceProofs": [
+            {"path": path.relative_to(source_root).as_posix(), "sha256": sha256_file(path)}
+            for path in sorted(source_paths)
+        ],
+    }
+
+
+def stateful_resource_flows(source_root: Path, annotations_path: Path | None) -> list[dict[str, Any]]:
+    if annotations_path is None:
+        return []
+    document = read_document(annotations_path)
+    authored = document.get("python", {}).get("statefulResourceFlows", [])
+    if not isinstance(authored, list):
+        raise ValueError("Python SDK annotations statefulResourceFlows must be a list")
+    validated = [validate_stateful_resource_flow(source_root, item) for item in authored]
+    identifiers = [item["id"] for item in validated]
+    if len(set(identifiers)) != len(identifiers):
+        raise ValueError("Python SDK annotations contain duplicate stateful resource flow ids")
+    return validated
+
+
 def parse_generated_directory(source_root: Path, relative_directory: Path, flavor: str) -> dict[tuple[str, str], dict[str, Any]]:
     directory = source_root / relative_directory
     if not directory.is_dir():
@@ -303,6 +466,7 @@ def build_surface(
     unprocessed_model = read_document(unprocessed_path)
     authoritative_inventory = read_document(authoritative_inventory_path)
     delegations, annotation_coordinates = condition_delegations(source_root, annotations_path)
+    stateful_flows = stateful_resource_flows(source_root, annotations_path)
     processed = processed_operations(processed_model)
     flavor_directories = {"sync": Path("kubernetes/client/api"), "async": Path("kubernetes/aio/client/api")}
     symbol_sets = {
@@ -395,8 +559,12 @@ def build_surface(
     if annotation_coordinates:
         source_metadata["sdkAnnotations"] = annotation_coordinates
     semantic_body: dict[str, Any] = {"surfaces": surfaces}
-    if delegations:
-        semantic_body["python"] = {"conditionDelegations": delegations}
+    if delegations or stateful_flows:
+        semantic_body["python"] = {}
+        if delegations:
+            semantic_body["python"]["conditionDelegations"] = delegations
+        if stateful_flows:
+            semantic_body["python"]["statefulResourceFlows"] = stateful_flows
     result = {
         "apiVersion": SURFACE_API_VERSION,
         "kind": SURFACE_KIND,
@@ -423,12 +591,17 @@ def build_surface(
                 "watchCapableMethods": watch_capable,
                 "conditionalWatchProjections": conditional_watch,
                 "conditionDelegations": len(delegations),
+                "statefulResourceFlows": len(stateful_flows),
             },
         },
         "surfaces": surfaces,
     }
-    if delegations:
-        result["python"] = {"conditionDelegations": delegations}
+    if delegations or stateful_flows:
+        result["python"] = {}
+        if delegations:
+            result["python"]["conditionDelegations"] = delegations
+        if stateful_flows:
+            result["python"]["statefulResourceFlows"] = stateful_flows
     return result
 
 
@@ -442,6 +615,7 @@ def review_markdown(surface: dict[str, Any]) -> str:
     dynamic_discovery = len(dynamic) - len(dynamic_resources)
     dynamic_watch = sum("watchArgument" in item for item in dynamic_resources)
     delegations = surface.get("python", {}).get("conditionDelegations", [])
+    stateful_flows = surface.get("python", {}).get("statefulResourceFlows", [])
     representative_symbols = " and ".join(f"`{item['module']}.{item['class']}.{item['method']}`" for item in representative["symbols"])
     lines = [
         "# Kubernetes Python 36.0.3 SDK surface review",
@@ -477,6 +651,7 @@ def review_markdown(surface: dict[str, Any]) -> str:
         f"- Methods exposing a `watch` argument: {summary['watchCapableMethods']}",
         f"- Statically derived list-to-watch conditional projections: {summary['conditionalWatchProjections']}",
         f"- Source-verified handwritten condition delegations: {summary['conditionDelegations']}",
+        f"- Source-verified stateful resource flows: {summary['statefulResourceFlows']}",
         "",
         "## Representative join",
         "",
@@ -486,11 +661,11 @@ def review_markdown(surface: dict[str, Any]) -> str:
         "",
         f"The {summary['classifications'].get('authoritative', 0)} generated endpoint mappings and {summary['syncSymbols'] + summary['asyncSymbols']} generated public symbols require no handwritten method table. The generator or adjacent build step can emit them from the retained processed model and generated source verification. Reused transformed operation IDs confirm that endpoint plus owning class must remain part of SDK identity.",
         "",
-        f"The focused SDK-owned semantic surface contains {len(dynamic_resources)} distinct custom-resource method records, {dynamic_discovery} API-discovery method record, {len(delegations)} source-verified handwritten condition delegation, and any future wrappers or aliases absent from the processed model. These records must not collapse into one operation with combinatorial verb, scope, or subresource choices: each public SDK method determines one fixed base verb, scope, and optional subresource, while the {dynamic_watch} list methods have one explicit source-proven `watch=true` override and only resource coordinates such as group, version, and plural resource bind from method arguments. `Watch.stream` contributes no standalone Kubernetes condition; it delegates to the mapped callable and activates only a conditional argument declared by that target. A shared generator rule may emit and validate the separate records, but it is not itself an SDK mapping operation. A record must not emit a concrete resource requirement when application source leaves required coordinates unresolved.",
+        f"The focused SDK-owned semantic surface contains {len(dynamic_resources)} distinct custom-resource method records, {dynamic_discovery} API-discovery method record, {len(delegations)} source-verified handwritten condition delegation, {len(stateful_flows)} source-verified stateful resource flow, and any future wrappers or aliases absent from the processed model. These records must not collapse into one operation with combinatorial verb, scope, or subresource choices: each public SDK method determines one fixed base verb, scope, and optional subresource, while the {dynamic_watch} list methods have one explicit source-proven `watch=true` override and only resource coordinates such as group, version, and plural resource bind from method arguments. `Watch.stream` contributes no standalone Kubernetes condition; it delegates to the mapped callable and activates only a conditional argument declared by that target. The stateful flow describes one discovery-produced Resource object and seven source-verified methods; its built-in resource catalog remains deterministic generated data rather than a handwritten SDK table. A record must not emit a concrete resource requirement when application source leaves required coordinates unresolved.",
         "",
-        "## Next gate",
+        "## Accepted validation boundary",
         "",
-        "Review the single source-verified `Watch.stream` delegation annotation and its profiler behavior, then investigate whether `DynamicClient` and discovery-created `Resource` state can be represented without broad conditions or per-resource annotations.",
+        "The real-profiler application proof is recorded separately from this source inventory. Literal built-in GVK selectors resolve through the extension-generated authoritative catalog, while an unmodeled CRD remains unresolved unless application source independently proves its plural resource and scope. Dynamic subresources, ResourceList fan-out, and constructor-only discovery traffic remain explicit boundaries.",
         "",
     ]
     return "\n".join(lines)

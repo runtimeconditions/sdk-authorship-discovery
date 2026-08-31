@@ -26,7 +26,7 @@ Every project uses ordinary boto3 code, can perform a real S3 request with norma
 
 The second model-generated family begins under [`kubernetes`](kubernetes/) with an unchanged application using the official Kubernetes Python client. Its extension and SDK mapping are deliberately separate from the AWS implementation.
 
-[`authorship/kubernetes-python`](authorship/kubernetes-python/) projects the exact Python 36.0.3 generator input into statically verified public SDK symbols, joins generated endpoints back to the authoritative Kubernetes inventory, source-verifies one handwritten `Watch.stream` delegation annotation, targets an immutable Kubernetes API extension release, packages the mapping into a locally rebuilt wheel, profiles unchanged direct and delegated applications, and replays the 36.0.x release line. `DynamicClient` and discovery-created resource behavior remain explicitly outside the mapping while their owner-aligned representation is investigated.
+[`authorship/kubernetes-python`](authorship/kubernetes-python/) projects the exact Python 36.0.3 generator input into statically verified public SDK symbols, joins generated endpoints back to the authoritative Kubernetes inventory, source-verifies one handwritten `Watch.stream` delegation and one DynamicClient state flow, targets an immutable Kubernetes API extension release, packages the mapping into a locally rebuilt wheel, profiles five unchanged typed and dynamic applications, and replays the 36.0.x release line. Built-in DynamicClient resources resolve through an extension-generated selector catalog; unmodeled CRDs remain silent because static source does not prove the plural resource name or scope supplied by live discovery.
 
 ## Set up and test the applications
 
@@ -81,7 +81,7 @@ The final Kubernetes Python generator processes v36.0.0 through v36.0.3 with no 
 
 ## Expansion policy
 
-The next investigation axis is SDK architecture rather than another AWS service. Kubernetes `DynamicClient` and discovery-created resource behavior are the remaining boundary of the current package; NATS, OpenTelemetry, OpenFeature, and Dapr then test handwritten client, exporter, provider, and sidecar delegation models. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
+The next investigation axis is SDK architecture rather than another AWS service. The Kubernetes case has now exercised generated methods, dynamic generated endpoints, a higher-order callable wrapper, and a discovery-created stateful resource. NATS is next and will test a primarily handwritten Go client before OpenTelemetry, OpenFeature, and Dapr test exporter, provider, and sidecar delegation models. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
 
 New languages belong in separate independently buildable projects under `s3/<language>/`. Adding a corpus project does not authorize a profiler change; language-profiler expansion is discussed separately before implementation.
 

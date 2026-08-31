@@ -1,6 +1,6 @@
 schemaVersion: 1
 id: kubernetes-python
-status: accepted-generated-client-and-condition-delegation
+status: accepted-generated-client-condition-delegation-and-stateful-resource-flow
 owner:
   repository: https://github.com/kubernetes-client/python.git
   tag: v36.0.3
@@ -21,7 +21,7 @@ inputs:
     semanticSha256: 0ea1345e622231970d47bd80a0babc84a7425edf17596673e9112882b0b2a701
   serviceMapping:
     path: kubernetes-api/model/generated/kubernetes-service-mapping.yaml
-    semanticSha256: 4596f8c4d67c398130424617f76d1bad10418d3ddb24bf2ff23942f5a7a097cd
+    semanticSha256: 55e5307e0d614988f68742801ee384d6b0da8c9ee292af9e26da538d8060f59f
   extension:
     id: https://runtimeconditions.io/extensions/kubernetes-api/0.1.0/runtimeconditions.extension.yaml
     version: 0.1.0
@@ -38,10 +38,14 @@ outputs:
   mappingReview: authorship/kubernetes-python/results/python-36.0.3-mapping-review.md
   profile: authorship/kubernetes-python/results/configmap-profile.yaml
   delegatedProfile: authorship/kubernetes-python/results/pod-watcher-profile.yaml
+  dynamicProfile: authorship/kubernetes-python/results/dynamic-configmap-profile.yaml
+  dynamicWatchProfile: authorship/kubernetes-python/results/dynamic-pod-watcher-profile.yaml
+  unresolvedCRDProfile: authorship/kubernetes-python/results/dynamic-crd-profile.yaml
   packagingReview: authorship/kubernetes-python/results/packaging-review.md
   releaseReplay: authorship/kubernetes-python/results/release-replay.yaml
   releaseReplayReview: authorship/kubernetes-python/results/release-replay.md
-remainingBoundary:
-- kubernetes.dynamic.DynamicClient
-- kubernetes.dynamic.resource.Resource delegation
+acceptedBoundaries:
+- Unmodeled CRDs whose plural name and scope exist only in live discovery
+- Dynamic subresources and ResourceList fan-out
+- Constructor-time discovery traffic without a statically resolved resource demand
 fixture: kubernetes/python/configmap-reader

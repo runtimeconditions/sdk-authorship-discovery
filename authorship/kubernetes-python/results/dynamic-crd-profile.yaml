@@ -1,0 +1,9 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: kubernetes-dynamic-crd-reader
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/kubernetes/python/dynamic-crd-reader
+  version: 0.1.0
+extensions: []
+conditions: []

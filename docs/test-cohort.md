@@ -17,11 +17,11 @@ The cohort will be investigated sequentially. Each case must produce a detailed 
 | OpenFeature SDK and provider | Go | Stable API with provider delegation | Can recursively composed mappings distinguish no-op or in-memory providers from providers that prove an external flag service? |
 | Dapr SDK | Java | Portable API delegated through a sidecar and runtime-selected components | Can a mapping preserve the logical Dapr capability without incorrectly claiming the application directly requires the configured database, broker, or secret store? |
 
-OpenFeature will use Go, as selected for this investigation. Language choice is part of the test: the cohort exercises the existing Python, Go, and Java profilers without authorizing changes to them.
+OpenFeature will use Go, as selected for this investigation. Language choice is part of the test: the cohort must reveal the profiler contract each architecture actually needs. A profiler is not treated as frozen; any required change is reviewed explicitly and must preserve its existing regression suite.
 
 ## Sequence
 
-1. Complete the Kubernetes Python case as the second model-generated family and identify which AWS conclusions are actually model-system independent.
+1. Use the completed Kubernetes Python case as the second model-generated family and retain only the conclusions independently demonstrated by both it and AWS.
 2. Complete the NATS Go case to test the authoring burden when there is no comprehensive service model from which to derive public behavior.
 3. Complete the OpenTelemetry Python case to establish the package-boundary and exporter-delegation contract.
 4. Complete the OpenFeature Go case to challenge that contract with no-op, local, remote, named, and composed providers.
@@ -50,4 +50,4 @@ If an archetype genuinely requires additional metadata, the investigation will d
 
 ## Current work
 
-The AWS Python case now has packaging, maintenance, and real profiler evidence across seven unchanged applications, including direct factories, application data flow, resources, nested transfer mappings, and unresolved dynamic selection. The Kubernetes Python case covers generated typed-client calls, dynamic generated endpoints, installed mapping discovery, and one source-verified `Watch.stream` condition delegation consumed without SDK imports or application declarations. Kubernetes `DynamicClient` and discovery-created `Resource` state remain the final boundary before the case can close and the cohort can move to NATS Go.
+The AWS Python case has packaging, maintenance, and real profiler evidence across seven unchanged applications, including direct factories, application data flow, resources, nested transfer mappings, and unresolved dynamic selection. The Kubernetes Python case now covers generated typed-client calls, dynamic generated endpoints, installed mapping discovery, one source-verified `Watch.stream` condition delegation, and one source-verified DynamicClient producer/state/method flow consumed without SDK imports or application declarations. Its 95 built-in selectors are generated from extension semantics, its eight DynamicClient operations remain distinct, and an unmodeled CRD emits nothing. This closes the Kubernetes investigation at an explicit capability boundary and makes NATS Go the next active case.

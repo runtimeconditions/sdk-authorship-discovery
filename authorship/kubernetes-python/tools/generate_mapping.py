@@ -190,6 +190,112 @@ def validate_condition_delegations(surface: dict[str, Any], methods: list[dict[s
     return [{"id": item["id"], "symbols": item["symbols"], "delegate": item["delegate"]} for item in delegations]
 
 
+def build_stateful_resource_flows(
+    surface: dict[str, Any],
+    service_mapping: dict[str, Any],
+    owner: dict[str, Any],
+    validator: Draft202012Validator,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    flows = surface.get("python", {}).get("statefulResourceFlows", [])
+    if not isinstance(flows, list):
+        raise ValueError("surface statefulResourceFlows must be a list")
+    catalog = service_mapping.get("resources")
+    if flows and (not isinstance(catalog, list) or not catalog):
+        raise ValueError("stateful resource flows require the extension service mapping resource catalog")
+    catalog_cases: list[dict[str, Any]] = []
+    seen_selectors: set[tuple[str, str, str]] = set()
+    for resource in catalog or []:
+        selector = (resource.get("apiGroup"), resource.get("apiVersion"), resource.get("kind"))
+        if not all(isinstance(value, str) for value in selector) or selector in seen_selectors:
+            raise ValueError(f"invalid or duplicate service resource selector {selector!r}")
+        seen_selectors.add(selector)
+        operations = resource.get("operations")
+        if not isinstance(resource.get("resource"), str) or not isinstance(resource.get("namespaced"), bool) or not isinstance(operations, list) or not operations:
+            raise ValueError(f"invalid service resource catalog entry {selector!r}")
+        for operation in operations:
+            verb = operation.get("verb") if isinstance(operation, dict) else None
+            scopes = operation.get("scopes") if isinstance(operation, dict) else None
+            if not isinstance(verb, str) or not isinstance(scopes, list) or not scopes:
+                raise ValueError(f"invalid service resource operation for {selector!r}")
+            for scope in scopes:
+                validate_condition(
+                    validator,
+                    {"kind": "kubernetes", "interfaceType": "api"},
+                    {"verb": verb, "apiGroup": resource["apiGroup"], "apiVersion": resource["apiVersion"], "resource": resource["resource"], "scope": scope},
+                    f"service resource {selector!r} {verb}/{scope}",
+                )
+        catalog_cases.append(
+            {
+                "selector": {"apiGroup": resource["apiGroup"], "apiVersion": resource["apiVersion"], "kind": resource["kind"]},
+                "state": {
+                    "apiGroup": resource["apiGroup"],
+                    "apiVersion": resource["apiVersion"],
+                    "resource": resource["resource"],
+                    "namespaced": resource["namespaced"],
+                    "operations": operations,
+                },
+            }
+        )
+
+    operation_records: dict[str, dict[str, Any]] = {}
+    mapped_flows: list[dict[str, Any]] = []
+    for flow in flows:
+        identifier = flow.get("id") if isinstance(flow, dict) else None
+        producer = flow.get("producer") if isinstance(flow, dict) else None
+        methods = flow.get("methods") if isinstance(flow, dict) else None
+        if not isinstance(identifier, str) or not isinstance(producer, dict) or not isinstance(methods, list):
+            raise ValueError("invalid stateful resource flow")
+        mapped_methods: list[dict[str, Any]] = []
+        for method in methods:
+            mapped_operations: list[dict[str, Any]] = []
+            for branch in method.get("operations", []):
+                verb = branch.get("verb")
+                scope_mode = branch.get("scopeMode")
+                if not isinstance(verb, str) or scope_mode not in {"resource", "collection"}:
+                    raise ValueError(f"{identifier}: invalid {method.get('method')} stateful operation")
+                name = f"DynamicResource.{verb}"
+                existing = operation_records.get(name)
+                record = {
+                    "name": name,
+                    "conditionTemplate": {
+                        "kind": "kubernetes",
+                        "interfaceType": "api",
+                        "operation": {"verb": verb},
+                        "stateBindings": {"apiGroup": "apiGroup", "apiVersion": "apiVersion", "resource": "resource"},
+                        "scopeResolution": {
+                            "stateField": "namespaced",
+                            "cases": [
+                                {"equals": False, "value": "cluster"},
+                                (
+                                    {
+                                        "equals": True,
+                                        "argumentProvided": {"provided": "namespaced", "omitted": "all_namespaces"},
+                                    }
+                                    if scope_mode == "collection"
+                                    else {"equals": True, "value": "namespaced"}
+                                ),
+                            ],
+                        },
+                    },
+                }
+                if existing is not None and existing != record:
+                    raise ValueError(f"{identifier}: conflicting stateful operation template {name}")
+                operation_records[name] = record
+                mapped_branch = {key: value for key, value in branch.items() if key not in {"verb", "scopeMode"}}
+                mapped_branch["operationRef"] = {"distribution": owner["distribution"], "mapping": "kubernetes.api", "operation": name}
+                mapped_operations.append(mapped_branch)
+            mapped_methods.append({"method": method["method"], "scopeArgument": method["namespaceArgument"], "operations": mapped_operations})
+        mapped_flows.append(
+            {
+                "id": identifier,
+                "constructorSymbols": flow["constructorSymbols"],
+                "producer": {**producer, "catalog": catalog_cases},
+                "methods": mapped_methods,
+            }
+        )
+    return mapped_flows, sorted(operation_records.values(), key=lambda item: item["name"])
+
+
 def build_mapping(surface: dict[str, Any], service_mapping: dict[str, Any], extension: dict[str, Any]) -> dict[str, Any]:
     require(surface.get("kind"), "RuntimeConditionsPythonSDKSurfaceInventory", "surface kind")
     require(service_mapping.get("kind"), "RuntimeConditionsServiceMapping", "service mapping kind")
@@ -239,15 +345,23 @@ def build_mapping(surface: dict[str, Any], service_mapping: dict[str, Any], exte
                     "operationOverride": {"verb": "watch"},
                 }
         methods.append(method)
+    stateful_flows, stateful_operations = build_stateful_resource_flows(surface, service_mapping, owner, validator)
+    for record in stateful_operations:
+        if record["name"] in operation_names:
+            raise ValueError(f"stateful operation collides with generated operation {record['name']}")
+        operation_names.add(record["name"])
+        operations.append(record)
     operations.sort(key=lambda item: item["name"])
     methods.sort(key=lambda item: (item["symbols"][0]["module"], item["symbols"][0]["class"], item["symbols"][0]["method"]))
     delegations = validate_condition_delegations(surface, methods)
     python_mapping: dict[str, Any] = {"apiMethods": methods}
     if delegations:
         python_mapping["conditionDelegations"] = delegations
+    if stateful_flows:
+        python_mapping["statefulResourceFlows"] = stateful_flows
     body = {"operations": operations, "python": python_mapping}
-    classifications = Counter("dynamic" if "conditionTemplate" in item else "authoritative" for item in operations)
-    public_symbol_count = sum(len(item["symbols"]) for item in methods) + sum(len(item["symbols"]) for item in delegations)
+    classifications = Counter("stateful" if item["name"].startswith("DynamicResource.") else "dynamic" if "conditionTemplate" in item else "authoritative" for item in operations)
+    public_symbol_count = sum(len(item["symbols"]) for item in methods) + sum(len(item["symbols"]) for item in delegations) + sum(len(item["constructorSymbols"]) for item in stateful_flows)
     return {
         "apiVersion": MAPPING_API_VERSION,
         "kind": MAPPING_KIND,
@@ -268,6 +382,8 @@ def build_mapping(surface: dict[str, Any], service_mapping: dict[str, Any], exte
                 "operationRecords": dict(sorted(classifications.items())),
                 "conditionalWatchMethods": sum("conditionalOperation" in item for item in methods),
                 "conditionDelegations": len(delegations),
+                "statefulResourceFlows": len(stateful_flows),
+                "statefulResourceCatalogEntries": sum(len(item["producer"]["catalog"]) for item in stateful_flows),
             },
         },
         "dependencies": [{"kind": "extension", **extension_coordinates}],
@@ -282,6 +398,9 @@ def review_markdown(mapping: dict[str, Any]) -> str:
     config_map = next(item for item in mapping["python"]["apiMethods"] if item["symbols"][0]["method"] == "read_namespaced_config_map")
     create_custom = next(item for item in mapping["operations"] if item["name"] == "CustomObjectsApi.create_namespaced_custom_object")
     dynamic_records = [item for item in mapping["operations"] if "conditionTemplate" in item]
+    stateful_flows = mapping["python"].get("statefulResourceFlows", [])
+    endpoint_dynamic_records = [item for item in dynamic_records if "endpoint" in item]
+    stateful_records = [item for item in dynamic_records if item["name"].startswith("DynamicResource.")]
     lines = [
         "# Kubernetes Python conforming mapping review",
         "",
@@ -296,10 +415,12 @@ def review_markdown(mapping: dict[str, Any]) -> str:
         f"- Mapping semantic SHA-256: `{metadata['semanticSha256']}`",
         f"- Target extension: `{mapping['extension']['id']}`",
         f"- Target extension semantic SHA-256: `{mapping['extension']['semanticSha256']}`",
-        f"- Operation records: {metadata['operationCount']} ({summary['operationRecords'].get('authoritative', 0)} authoritative and {summary['operationRecords'].get('dynamic', 0)} dynamic)",
-        f"- Public sync/async symbols: {metadata['publicSymbolCount']}",
+        f"- Operation records: {metadata['operationCount']} ({summary['operationRecords'].get('authoritative', 0)} authoritative, {summary['operationRecords'].get('dynamic', 0)} generated dynamic, and {summary['operationRecords'].get('stateful', 0)} stateful templates)",
+        f"- Mapped public symbols: {metadata['publicSymbolCount']}",
         f"- Conditional list-to-watch methods: {summary['conditionalWatchMethods']}",
         f"- Source-verified condition delegations: {summary['conditionDelegations']}",
+        f"- Source-verified stateful resource flows: {summary['statefulResourceFlows']}",
+        f"- Generated built-in discovery selectors: {summary['statefulResourceCatalogEntries']}",
         "",
         "## Representative typed-client join",
         "",
@@ -307,15 +428,15 @@ def review_markdown(mapping: dict[str, Any]) -> str:
         "",
         "## Dynamic method contract",
         "",
-        f"The mapping contains {len(dynamic_records)} separate dynamic endpoint/method records. For example, `{create_custom['name']}` fixes `create` and `namespaced`; only API group, API version, and plural resource bind from that method's required arguments. No operation record contains a list of possible verbs, scopes, or subresources.",
+        f"The mapping contains {len(endpoint_dynamic_records)} separate generated dynamic endpoint/method records. For example, `{create_custom['name']}` fixes `create` and `namespaced`; only API group, API version, and plural resource bind from that method's required arguments. The handwritten DynamicClient flow contributes {len(stateful_records)} distinct verb templates and {len(stateful_flows[0]['producer']['catalog']) if stateful_flows else 0} generated built-in resource selectors. It does not collapse the methods into one combinatorial operation.",
         "",
         "## SDK-author review surface",
         "",
-        "Generated typed-client records require no handwritten method table. Maintainers review the generator integration, the separate dynamic binding rule, one source-verified `Watch.stream` delegation annotation, future handwritten wrappers, and the concise release difference. The generated mapping YAML is not a line-by-line review surface.",
+        "Generated typed-client records require no handwritten method table. Maintainers review the generator integration, the separate generated-method binding rule, one source-verified `Watch.stream` delegation annotation, one stateful DynamicClient flow with seven methods, future handwritten wrappers, and the concise release difference. The generated mapping YAML and built-in resource selector catalog are not line-by-line review surfaces.",
         "",
         "## Scope boundary",
         "",
-        "This mapping conforms to the extension for the complete generated typed-client surface and the handwritten `Watch.stream` delegation. The wrapper contributes no generic Kubernetes condition: a profiler must resolve its callable argument, inherit that target's mapped condition, forward application arguments, and activate only a conditional argument declared by the target. `DynamicClient`, discovery-created `Resource` state, and other non-generated package behavior remain outside this mapping.",
+        "This mapping conforms to the extension for the complete generated typed-client surface, the handwritten `Watch.stream` delegation, and the source-verified DynamicClient base-resource flow. A profiler may resolve a discovery-created Resource only when statically resolved selectors match one generated built-in catalog entry. An unmodeled CRD remains unresolved because its plural name and scope exist only in live discovery state. Dynamic subresources, ResourceList fan-out, constructor-time discovery requests, and other non-generated package behavior remain explicit boundaries.",
         "",
     ]
     return "\n".join(lines)
