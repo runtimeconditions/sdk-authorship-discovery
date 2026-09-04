@@ -1,0 +1,569 @@
+schemaVersion: 1
+metadata:
+    module: github.com/nats-io/nats.go
+    moduleVersion: v1.53.1
+summary:
+    scoped: 186
+    mapped: 86
+    excluded: 64
+    deferred: 36
+    unclassified: 0
+symbols:
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.CachedInfo
+      status: excluded
+      reason: CachedInfo is explicitly local and performs no network request.
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.Consume
+      status: mapped
+      callId: consume
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.Fetch
+      status: mapped
+      callId: consumer-consume-fetch
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.FetchBytes
+      status: mapped
+      callId: consumer-consume-fetch-bytes
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.FetchNoWait
+      status: mapped
+      callId: consumer-consume-fetch-no-wait
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.Info
+      status: mapped
+      callId: consumer-inspect-info
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.Messages
+      status: mapped
+      callId: consumer-consume-messages
+    - symbol: github.com/nats-io/nats.go/jetstream::Consumer.Next
+      status: mapped
+      callId: consumer-consume-next
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.Consumer
+      status: mapped
+      callId: stream-consumer-inspect-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.ConsumerNames
+      status: deferred
+      reason: These discovery calls do not prove the consumer name represented by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.CreateConsumer
+      status: mapped
+      callId: stream-consumer-create-create-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.CreateOrUpdateConsumer
+      status: deferred
+      reason: These methods select create or update from remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.CreateOrUpdatePushConsumer
+      status: deferred
+      reason: These methods select create or update from remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.CreatePushConsumer
+      status: mapped
+      callId: stream-consumer-create-create-push-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.DeleteConsumer
+      status: mapped
+      callId: stream-consumer-delete-delete-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.ListConsumers
+      status: deferred
+      reason: These discovery calls do not prove the consumer name represented by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.OrderedConsumer
+      status: mapped
+      callId: stream-consumer-ordered-ordered-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.PauseConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.PushConsumer
+      status: mapped
+      callId: stream-consumer-inspect-push-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.ResetConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.ResetConsumerToSequence
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.ResumeConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.UnpinConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.UpdateConsumer
+      status: mapped
+      callId: stream-consumer-update-update-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::ConsumerManager.UpdatePushConsumer
+      status: mapped
+      callId: stream-consumer-update-update-push-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Bucket
+      status: excluded
+      reason: Bucket returns locally retained identity and performs no external operation.
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Create
+      status: mapped
+      callId: key-value-write-create
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Delete
+      status: mapped
+      callId: key-value-write-delete
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Get
+      status: mapped
+      callId: key-value-get
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.GetRevision
+      status: mapped
+      callId: key-value-read-get-revision
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.History
+      status: mapped
+      callId: key-value-read-history
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Keys
+      status: mapped
+      callId: key-value-read-keys
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.ListKeys
+      status: mapped
+      callId: key-value-read-list-keys
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.ListKeysFiltered
+      status: mapped
+      callId: key-value-read-list-keys-filtered
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Purge
+      status: mapped
+      callId: key-value-write-purge
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.PurgeDeletes
+      status: mapped
+      callId: key-value-write-purge-deletes
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Put
+      status: mapped
+      callId: key-value-put
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.PutString
+      status: mapped
+      callId: key-value-write-put-string
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Status
+      status: mapped
+      callId: key-value-inspect-status
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Update
+      status: mapped
+      callId: key-value-write-update
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.Watch
+      status: mapped
+      callId: key-value-watch
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.WatchAll
+      status: mapped
+      callId: key-value-watch-watch-all
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValue.WatchFiltered
+      status: mapped
+      callId: key-value-watch-watch-filtered
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.CreateKeyValue
+      status: mapped
+      callId: create-key-value
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.CreateOrUpdateKeyValue
+      status: deferred
+      reason: The method selects create or update from remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.DeleteKeyValue
+      status: mapped
+      callId: delete-key-value
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.KeyValue
+      status: mapped
+      callId: inspect-key-value
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.KeyValueStoreNames
+      status: deferred
+      reason: These service-wide discovery calls do not prove the bucket required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.KeyValueStores
+      status: deferred
+      reason: These service-wide discovery calls do not prove the bucket required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::KeyValueManager.UpdateKeyValue
+      status: deferred
+      reason: Key-value bucket configuration update is not represented by the current extension actions.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.AddBucketLink
+      status: deferred
+      reason: Link creation can require secondary object-store resources that the current mapping cannot bind safely.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.AddLink
+      status: deferred
+      reason: Link creation can require secondary object-store resources that the current mapping cannot bind safely.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.Delete
+      status: mapped
+      callId: object-store-write-delete
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.Get
+      status: mapped
+      callId: object-store-read-get
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.GetBytes
+      status: mapped
+      callId: object-store-read-get-bytes
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.GetFile
+      status: mapped
+      callId: object-store-read-get-file
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.GetInfo
+      status: mapped
+      callId: object-store-read-get-info
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.GetString
+      status: mapped
+      callId: object-store-get-string
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.List
+      status: mapped
+      callId: object-store-read-list
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.Put
+      status: mapped
+      callId: object-store-write-put
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.PutBytes
+      status: mapped
+      callId: object-store-write-put-bytes
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.PutFile
+      status: mapped
+      callId: object-store-write-put-file
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.PutString
+      status: mapped
+      callId: object-store-put-string
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.Seal
+      status: deferred
+      reason: Sealing mutates bucket configuration, which is not represented by the current extension actions.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.Status
+      status: mapped
+      callId: object-store-inspect-status
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.UpdateMeta
+      status: mapped
+      callId: object-store-write-update-meta
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStore.Watch
+      status: mapped
+      callId: object-store-watch
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.CreateObjectStore
+      status: mapped
+      callId: create-object-store
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.CreateOrUpdateObjectStore
+      status: deferred
+      reason: The method selects create or update from remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.DeleteObjectStore
+      status: mapped
+      callId: delete-object-store
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.ObjectStore
+      status: mapped
+      callId: inspect-object-store
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.ObjectStoreNames
+      status: deferred
+      reason: These service-wide discovery calls do not prove the bucket required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.ObjectStores
+      status: deferred
+      reason: These service-wide discovery calls do not prove the bucket required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::ObjectStoreManager.UpdateObjectStore
+      status: deferred
+      reason: Object-store bucket configuration update is not represented by the current extension actions.
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.CleanupPublisher
+      status: excluded
+      reason: Publisher cleanup and local asynchronous status do not introduce another external operation.
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.Publish
+      status: mapped
+      callId: jetstream-publish
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.PublishAsync
+      status: mapped
+      callId: jetstream-publish-async
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.PublishAsyncComplete
+      status: excluded
+      reason: Publisher cleanup and local asynchronous status do not introduce another external operation.
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.PublishAsyncPending
+      status: excluded
+      reason: Publisher cleanup and local asynchronous status do not introduce another external operation.
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.PublishMsg
+      status: mapped
+      callId: jetstream-publish-message-publish-msg
+    - symbol: github.com/nats-io/nats.go/jetstream::Publisher.PublishMsgAsync
+      status: mapped
+      callId: jetstream-publish-message-publish-msg-async
+    - symbol: github.com/nats-io/nats.go/jetstream::PushConsumer.CachedInfo
+      status: excluded
+      reason: CachedInfo is explicitly local and performs no network request.
+    - symbol: github.com/nats-io/nats.go/jetstream::PushConsumer.Consume
+      status: mapped
+      callId: push-consumer-consume-consume
+    - symbol: github.com/nats-io/nats.go/jetstream::PushConsumer.Info
+      status: mapped
+      callId: push-consumer-inspect-info
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.CachedInfo
+      status: excluded
+      reason: CachedInfo is explicitly local and performs no network request.
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.DeleteMsg
+      status: deferred
+      reason: Stream message inspection and mutation need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.GetLastMsgForSubject
+      status: deferred
+      reason: Stream message inspection and mutation need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.GetMsg
+      status: deferred
+      reason: Stream message inspection and mutation need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.Info
+      status: mapped
+      callId: stream-info
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.Purge
+      status: deferred
+      reason: Stream message inspection and mutation need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::Stream.SecureDeleteMsg
+      status: deferred
+      reason: Stream message inspection and mutation need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.Consumer
+      status: mapped
+      callId: inspect-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.CreateConsumer
+      status: mapped
+      callId: create-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.CreateOrUpdateConsumer
+      status: deferred
+      reason: These methods select create or update from remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.CreateOrUpdatePushConsumer
+      status: deferred
+      reason: These methods select create or update from remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.CreatePushConsumer
+      status: mapped
+      callId: create-push-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.DeleteConsumer
+      status: mapped
+      callId: delete-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.OrderedConsumer
+      status: mapped
+      callId: ordered-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.PauseConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.PushConsumer
+      status: mapped
+      callId: inspect-push-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.ResetConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.ResetConsumerToSequence
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.ResumeConsumer
+      status: deferred
+      reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.UpdateConsumer
+      status: mapped
+      callId: update-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamConsumerManager.UpdatePushConsumer
+      status: mapped
+      callId: update-push-consumer
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.CreateOrUpdateStream
+      status: deferred
+      reason: The method can create or update based on remote state, while the extension currently requires one fixed action.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.CreateStream
+      status: mapped
+      callId: create-stream
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.DeleteStream
+      status: mapped
+      callId: delete-stream
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.ListStreams
+      status: deferred
+      reason: These service-wide discovery calls do not prove the stream name required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.Stream
+      status: mapped
+      callId: inspect-stream
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.StreamNameBySubject
+      status: deferred
+      reason: These service-wide discovery calls do not prove the stream name required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.StreamNames
+      status: deferred
+      reason: These service-wide discovery calls do not prove the stream name required by the current extension form.
+    - symbol: github.com/nats-io/nats.go/jetstream::StreamManager.UpdateStream
+      status: mapped
+      callId: update-stream
+    - symbol: github.com/nats-io/nats.go::Conn.AddMsgFilter
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.AuthRequired
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Barrier
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Buffered
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ChanQueueSubscribe
+      status: mapped
+      callId: core-subscribe-chan-queue-subscribe
+    - symbol: github.com/nats-io/nats.go::Conn.ChanSubscribe
+      status: mapped
+      callId: core-subscribe-chan-subscribe
+    - symbol: github.com/nats-io/nats.go::Conn.Close
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.CloseTCPConn
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ClosedHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedAddr
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedClusterName
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedServerId
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedServerJetStream
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedServerName
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedServerVersion
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedUrl
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ConnectedUrlRedacted
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.DisconnectErrHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.DiscoveredServers
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.DiscoveredServersHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Drain
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ErrorHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Flush
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.FlushTimeout
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.FlushWithContext
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ForceReconnect
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.GetClientID
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.GetClientIP
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.HeadersSupported
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.IsClosed
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.IsConnected
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.IsDraining
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.IsReconnecting
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.IsSystemAccount
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.JetStream
+      status: deferred
+      reason: The legacy JetStream API is a separate handwritten surface and is not represented by the modern jetstream package mapping.
+    - symbol: github.com/nats-io/nats.go::Conn.LastError
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.LocalAddr
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.MaxPayload
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.NewInbox
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.NewRespInbox
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.NumSubscriptions
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Publish
+      status: mapped
+      callId: core-publish
+    - symbol: github.com/nats-io/nats.go::Conn.PublishMsg
+      status: mapped
+      callId: core-publish-message
+    - symbol: github.com/nats-io/nats.go::Conn.PublishRequest
+      status: mapped
+      callId: core-publish-request
+    - symbol: github.com/nats-io/nats.go::Conn.QueueSubscribe
+      status: mapped
+      callId: core-subscribe-queue-subscribe
+    - symbol: github.com/nats-io/nats.go::Conn.QueueSubscribeSync
+      status: mapped
+      callId: core-subscribe-queue-subscribe-sync
+    - symbol: github.com/nats-io/nats.go::Conn.QueueSubscribeSyncWithChan
+      status: mapped
+      callId: core-subscribe-queue-subscribe-sync-with-chan
+    - symbol: github.com/nats-io/nats.go::Conn.RTT
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.ReconnectHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.RemoveMsgFilter
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.RemoveStatusListener
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Request
+      status: mapped
+      callId: core-request
+    - symbol: github.com/nats-io/nats.go::Conn.RequestMsg
+      status: mapped
+      callId: core-request-message-request-msg
+    - symbol: github.com/nats-io/nats.go::Conn.RequestMsgWithContext
+      status: mapped
+      callId: core-request-message-request-msg-with-context
+    - symbol: github.com/nats-io/nats.go::Conn.RequestWithContext
+      status: mapped
+      callId: core-request-context-request-with-context
+    - symbol: github.com/nats-io/nats.go::Conn.ServerPool
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Servers
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetClosedHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetDisconnectErrHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetDisconnectHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetDiscoveredServersHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetErrorHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetReconnectHandler
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.SetServerPool
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Stats
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Status
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.StatusChanged
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.Subscribe
+      status: mapped
+      callId: core-subscribe
+    - symbol: github.com/nats-io/nats.go::Conn.SubscribeSync
+      status: mapped
+      callId: core-subscribe-subscribe-sync
+    - symbol: github.com/nats-io/nats.go::Conn.TLSConnectionState
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Conn.TLSRequired
+      status: excluded
+      reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+    - symbol: github.com/nats-io/nats.go::Connect
+      status: mapped
+      callId: connect
+    - symbol: github.com/nats-io/nats.go::ConnectHandler
+      status: excluded
+      reason: This is an option constructor and does not itself establish a connection.

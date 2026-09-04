@@ -1,0 +1,64 @@
+schemaVersion: 1
+experiment: nats-go-expanded-surface-replay
+mapping:
+  authoredIndividualCalls: 35
+  authoredCallGroups: 20
+  groupedMethods: 52
+  generatedCallRecords: 87
+  mappedPublicOperations: 86
+  stateOnlyCalls: 1
+  producedStateTypes: 6
+  extension: https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+releases:
+  - version: v1.51.0
+    revision: 17b6fd141ba960bdc07278101f8b6381293bbfe1
+    expandedSourceSurfaceValidation: passed
+    currentPolicyProjectedOntoRelease:
+      scopedPublicSymbols: 182
+      mapped: 86
+      excluded: 64
+      deferred: 32
+      unclassified: 0
+      laterPolicySymbolsAbsentFromSource: 4
+    authoredOperationChanges: 0
+    authoredBindingChanges: 0
+    maintenanceClassificationDeltaToNextRelease:
+      addedPublicSymbols:
+        - github.com/nats-io/nats.go/jetstream::StreamConsumerManager.ResetConsumer
+        - github.com/nats-io/nats.go/jetstream::StreamConsumerManager.ResetConsumerToSequence
+        - github.com/nats-io/nats.go/jetstream::ConsumerManager.ResetConsumer
+        - github.com/nats-io/nats.go/jetstream::ConsumerManager.ResetConsumerToSequence
+      disposition: deferred
+      reason: Consumer reset behavior is not represented by the current extension vocabulary.
+  - version: v1.52.0
+    revision: e9f2a36e31b1065f69b252ea090c01e8869eab0b
+    expandedSourceSurfaceValidation: passed
+    currentSurfacePolicyValidation: passed
+    scopedPublicSymbols: 186
+    mapped: 86
+    excluded: 64
+    deferred: 36
+    unclassified: 0
+    authoredOperationChanges: 0
+    authoredBindingChanges: 0
+  - version: v1.53.1
+    revision: db1375fcffae2eb0b4ced1b7bad4d47c4447e4ac
+    expandedSourceSurfaceValidation: passed
+    currentSurfacePolicyValidation: passed
+    scopedPublicSymbols: 186
+    mapped: 86
+    excluded: 64
+    deferred: 36
+    unclassified: 0
+    packageStaging: passed
+    applicationCompilation: passed
+    realProfilerApplications: 6
+    comprehensiveFixtureExtensionForms: 26
+    comprehensiveFixtureOperations: 30
+    independentlyIdentifiedConditions: 2
+    authoredOperationChanges: 0
+    authoredBindingChanges: 0
+limitations:
+  - Historical source validation used the current generated mapping body to test symbol, named-parameter, and typed-field compatibility. Historical mappings were not published with rewritten version, revision, and integrity metadata.
+  - Historical releases were not staged and run through all six applications.
+  - The v1.51.0 surface predates the four consumer-reset symbols added in v1.52.0, so the current latest-release policy is projected onto that source with absent later-release classifications reported explicitly.

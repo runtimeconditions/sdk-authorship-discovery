@@ -1,0 +1,219 @@
+schemaVersion: 1
+metadata:
+  module: github.com/nats-io/nats.go
+scopes:
+  - package: github.com/nats-io/nats.go
+    functionPatterns:
+      - ^Connect
+    receivers:
+      - Conn
+  - package: github.com/nats-io/nats.go/jetstream
+    receivers:
+      - Publisher
+      - StreamManager
+      - Stream
+      - StreamConsumerManager
+      - ConsumerManager
+      - Consumer
+      - PushConsumer
+      - KeyValueManager
+      - KeyValue
+      - ObjectStoreManager
+      - ObjectStore
+exclusions:
+  - package: github.com/nats-io/nats.go
+    functions:
+      - ConnectHandler
+    reason: This is an option constructor and does not itself establish a connection.
+  - package: github.com/nats-io/nats.go
+    receiver: Conn
+    methods:
+      - AddMsgFilter
+      - AuthRequired
+      - Barrier
+      - Buffered
+      - Close
+      - CloseTCPConn
+      - ClosedHandler
+      - ConnectedAddr
+      - ConnectedClusterName
+      - ConnectedServerId
+      - ConnectedServerJetStream
+      - ConnectedServerName
+      - ConnectedServerVersion
+      - ConnectedUrl
+      - ConnectedUrlRedacted
+      - DisconnectErrHandler
+      - DiscoveredServers
+      - DiscoveredServersHandler
+      - Drain
+      - ErrorHandler
+      - Flush
+      - FlushTimeout
+      - FlushWithContext
+      - ForceReconnect
+      - GetClientID
+      - GetClientIP
+      - HeadersSupported
+      - IsClosed
+      - IsConnected
+      - IsDraining
+      - IsReconnecting
+      - IsSystemAccount
+      - LastError
+      - LocalAddr
+      - MaxPayload
+      - NewInbox
+      - NewRespInbox
+      - NumSubscriptions
+      - RTT
+      - ReconnectHandler
+      - RemoveMsgFilter
+      - RemoveStatusListener
+      - ServerPool
+      - Servers
+      - SetClosedHandler
+      - SetDisconnectErrHandler
+      - SetDisconnectHandler
+      - SetDiscoveredServersHandler
+      - SetErrorHandler
+      - SetReconnectHandler
+      - SetServerPool
+      - Stats
+      - Status
+      - StatusChanged
+      - TLSConnectionState
+      - TLSRequired
+    reason: Connection lifecycle, local state, diagnostics, and callback registration add no adapter-actionable demand beyond the mapped connection.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: Publisher
+    methods:
+      - CleanupPublisher
+      - PublishAsyncComplete
+      - PublishAsyncPending
+    reason: Publisher cleanup and local asynchronous status do not introduce another external operation.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: Consumer
+    methods:
+      - CachedInfo
+    reason: CachedInfo is explicitly local and performs no network request.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: PushConsumer
+    methods:
+      - CachedInfo
+    reason: CachedInfo is explicitly local and performs no network request.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: Stream
+    methods:
+      - CachedInfo
+    reason: CachedInfo is explicitly local and performs no network request.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: KeyValue
+    methods:
+      - Bucket
+    reason: Bucket returns locally retained identity and performs no external operation.
+deferred:
+  - package: github.com/nats-io/nats.go
+    receiver: Conn
+    methods:
+      - JetStream
+    reason: The legacy JetStream API is a separate handwritten surface and is not represented by the modern jetstream package mapping.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: StreamManager
+    methods:
+      - CreateOrUpdateStream
+    reason: The method can create or update based on remote state, while the extension currently requires one fixed action.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: StreamManager
+    methods:
+      - ListStreams
+      - StreamNameBySubject
+      - StreamNames
+    reason: These service-wide discovery calls do not prove the stream name required by the current extension form.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: Stream
+    methods:
+      - DeleteMsg
+      - GetLastMsgForSubject
+      - GetMsg
+      - Purge
+      - SecureDeleteMsg
+    reason: Stream message inspection and mutation need adapter-actionable actions that the current extension does not define.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: StreamConsumerManager
+    methods:
+      - CreateOrUpdateConsumer
+      - CreateOrUpdatePushConsumer
+    reason: These methods select create or update from remote state, while the extension currently requires one fixed action.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: StreamConsumerManager
+    methods:
+      - PauseConsumer
+      - ResetConsumer
+      - ResetConsumerToSequence
+      - ResumeConsumer
+    reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ConsumerManager
+    methods:
+      - CreateOrUpdateConsumer
+      - CreateOrUpdatePushConsumer
+    reason: These methods select create or update from remote state, while the extension currently requires one fixed action.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ConsumerManager
+    methods:
+      - ConsumerNames
+      - ListConsumers
+    reason: These discovery calls do not prove the consumer name represented by the current extension form.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ConsumerManager
+    methods:
+      - PauseConsumer
+      - ResetConsumer
+      - ResetConsumerToSequence
+      - ResumeConsumer
+      - UnpinConsumer
+    reason: Consumer lifecycle mutations need adapter-actionable actions that the current extension does not define.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: KeyValueManager
+    methods:
+      - CreateOrUpdateKeyValue
+    reason: The method selects create or update from remote state, while the extension currently requires one fixed action.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: KeyValueManager
+    methods:
+      - KeyValueStoreNames
+      - KeyValueStores
+    reason: These service-wide discovery calls do not prove the bucket required by the current extension form.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: KeyValueManager
+    methods:
+      - UpdateKeyValue
+    reason: Key-value bucket configuration update is not represented by the current extension actions.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ObjectStoreManager
+    methods:
+      - CreateOrUpdateObjectStore
+    reason: The method selects create or update from remote state, while the extension currently requires one fixed action.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ObjectStoreManager
+    methods:
+      - ObjectStoreNames
+      - ObjectStores
+    reason: These service-wide discovery calls do not prove the bucket required by the current extension form.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ObjectStoreManager
+    methods:
+      - UpdateObjectStore
+    reason: Object-store bucket configuration update is not represented by the current extension actions.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ObjectStore
+    methods:
+      - AddBucketLink
+      - AddLink
+    reason: Link creation can require secondary object-store resources that the current mapping cannot bind safely.
+  - package: github.com/nats-io/nats.go/jetstream
+    receiver: ObjectStore
+    methods:
+      - Seal
+    reason: Sealing mutates bucket configuration, which is not represented by the current extension actions.
