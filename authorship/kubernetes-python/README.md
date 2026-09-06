@@ -4,7 +4,7 @@
 
 **Accepted generated typed-client, `Watch.stream`, and DynamicClient base-resource mapping with local profiler, packaging, and historical replay proof.**
 
-This project measures what the official Kubernetes Python maintainers would generate, annotate, package, and maintain. It consumes the exact source retained by Python client 36.0.3, the language-neutral authoritative Kubernetes operation inventory, and the immutable Kubernetes API extension release.
+This project measures what the official Kubernetes Python maintainers would generate, annotate, package, and maintain. It consumes the exact source retained by Python client 36.0.3, the language-neutral Kubernetes service mapping generated from authoritative OpenAPI plus its semantic bridge, and the immutable Kubernetes API extension release.
 
 ## Current result
 
@@ -20,7 +20,7 @@ Install the authoring-only dependency and provide an immutable Kubernetes Python
 python -m pip install -r authorship/kubernetes-python/requirements.txt
 python authorship/kubernetes-python/tools/project_surface.py \
   --source-root /absolute/path/to/kubernetes-client-python-v36.0.3 \
-  --authoritative-inventory ../extensions/kubernetes-api/model/generated/kubernetes-v1.36-operation-inventory.yaml \
+  --service-mapping ../extensions/kubernetes-api/model/generated/kubernetes-service-mapping.yaml \
   --repository https://github.com/kubernetes-client/python.git \
   --revision 67e7d9abfc6fe6629fa650d9b0abf4c99ef8c39c \
   --version 36.0.3 \

@@ -1,0 +1,106 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: nats-python-complete-service
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/nats/python/complete-service
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: nats
+  interface:
+    type: service
+    operations:
+    - resource: connection
+      action: connect
+    - resource: subject
+      action: publish
+      subject: events.created
+    - resource: subject
+      action: subscribe
+      subject: events.created
+    - resource: subject
+      action: request
+      subject: events.lookup
+    - resource: stream
+      action: create
+      name: ORDERS
+      subjects:
+      - orders.*
+    - resource: stream
+      action: update
+      name: ORDERS
+      subjects:
+      - orders.*
+      - returns.*
+    - resource: stream
+      action: inspect
+      name: ORDERS
+    - resource: stream
+      action: publish
+      subject: orders.created
+    - resource: consumer
+      action: create
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: consumer
+      action: inspect
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: consumer
+      action: consume
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: consumer
+      action: delete
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: stream
+      action: delete
+      name: ORDERS
+    - resource: key_value
+      action: create
+      bucket: SESSIONS
+    - resource: key_value
+      action: read
+      bucket: SESSIONS
+    - resource: key_value
+      action: write
+      bucket: SESSIONS
+    - resource: key_value
+      action: watch
+      bucket: SESSIONS
+    - resource: key_value
+      action: inspect
+      bucket: SESSIONS
+    - resource: key_value
+      action: delete
+      bucket: SESSIONS
+    - resource: object_store
+      action: create
+      bucket: ASSETS
+    - resource: object_store
+      action: read
+      bucket: ASSETS
+    - resource: object_store
+      action: write
+      bucket: ASSETS
+    - resource: object_store
+      action: watch
+      bucket: ASSETS
+    - resource: object_store
+      action: inspect
+      bucket: ASSETS
+    - resource: object_store
+      action: delete
+      bucket: ASSETS
+- kind: nats
+  interface:
+    type: service
+    operations:
+    - resource: connection
+      action: connect
+    - resource: subject
+      action: publish
+      subject: audit.created

@@ -1,0 +1,74 @@
+schemaVersion: 1
+metadata:
+  distribution: nats-py
+  distributionVersion: 2.15.0
+scopes:
+- module: nats.aio.client
+  class: Client
+  exclusions:
+  - methods:
+    - close
+    - drain
+    - new_inbox
+    - rtt
+    - flush
+    - connected_url
+    - servers
+    - discovered_servers
+    - server_pool
+    - set_server_pool
+    - max_payload
+    - client_id
+    - client_ip
+    - last_error
+    - pending_data_size
+    - is_closed
+    - is_reconnecting
+    - is_connected
+    - is_connecting
+    - is_draining
+    - is_draining_pubs
+    - connected_server_version
+    - ssl_context
+    - force_reconnect
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+- module: nats.js.manager
+  class: JetStreamManager
+  deferred:
+  - methods:
+    - account_info
+    - find_stream_name_by_subject
+    - streams_info
+    - streams_info_iterator
+    reason: Service-wide inspection does not prove the resource identity required by the current extension operations.
+  - methods:
+    - purge_stream
+    - get_msg
+    - delete_msg
+    - get_last_msg
+    reason: Stream message inspection and mutation need adapter-actionable operations that the current extension does not define.
+  - methods:
+    - pause_consumer
+    - resume_consumer
+    reason: Consumer delivery lifecycle mutations need adapter-actionable operations that the current extension does not define.
+- module: nats.js.client
+  class: JetStreamContext
+  exclusions:
+  - methods:
+    - publish_async_pending
+    - publish_async_completed
+    - is_status_msg
+    reason: Local asynchronous status and message classification do not introduce an external dependency operation.
+  deferred:
+  - methods:
+    - subscribe
+    - pull_subscribe
+    reason: These methods may inspect, create, bind, and consume depending on arguments and server state, so one fixed operation would overstate source-proven demand.
+- module: nats.js.kv
+  class: KeyValue
+- module: nats.js.object_store
+  class: ObjectStore
+  deferred:
+  - methods:
+    - seal
+    reason: Sealing mutates bucket configuration, which is not represented by the current extension actions.

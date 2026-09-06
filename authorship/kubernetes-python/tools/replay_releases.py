@@ -45,7 +45,7 @@ def release_source(repository: Path, tag: str, destination: Path) -> tuple[str, 
     return revision, match.group(1)
 
 
-def replay(repository: Path, tags: list[str], inventory_path: Path, service_mapping: dict[str, Any], extension: dict[str, Any], observations: dict[str, Any], sdk_annotations: Path) -> dict[str, Any]:
+def replay(repository: Path, tags: list[str], service_mapping_path: Path, service_mapping: dict[str, Any], extension: dict[str, Any], observations: dict[str, Any], sdk_annotations: Path) -> dict[str, Any]:
     if observations.get("experiment") != "kubernetes-python-release-replay":
         raise ValueError("maintenance observations target a different experiment")
     if observations.get("mode") != "retrospective-compatibility":
@@ -60,7 +60,7 @@ def replay(repository: Path, tags: list[str], inventory_path: Path, service_mapp
             revision, version = release_source(repository, tag, root)
             source = root / "source"
             try:
-                surface = build_surface(source, inventory_path, "https://github.com/kubernetes-client/python.git", revision, version, sdk_annotations)
+                surface = build_surface(source, service_mapping_path, "https://github.com/kubernetes-client/python.git", revision, version, sdk_annotations)
                 mapping = build_mapping(surface, service_mapping, extension)
                 record = {
                     "tag": tag,
@@ -137,7 +137,6 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository", type=Path, required=True)
     parser.add_argument("--tag", action="append", required=True)
-    parser.add_argument("--inventory", type=Path, required=True)
     parser.add_argument("--service-mapping", type=Path, required=True)
     parser.add_argument("--extension", type=Path, required=True)
     parser.add_argument("--observations", type=Path, required=True)
@@ -145,7 +144,7 @@ def main() -> None:
     parser.add_argument("--evidence-output", type=Path, required=True)
     parser.add_argument("--review-output", type=Path, required=True)
     args = parser.parse_args()
-    evidence = replay(args.repository.resolve(), args.tag, args.inventory.resolve(), read_document(args.service_mapping), read_document(args.extension), read_document(args.observations), args.sdk_annotations.resolve())
+    evidence = replay(args.repository.resolve(), args.tag, args.service_mapping.resolve(), read_document(args.service_mapping), read_document(args.extension), read_document(args.observations), args.sdk_annotations.resolve())
     write_yaml(args.evidence_output, evidence)
     args.review_output.parent.mkdir(parents=True, exist_ok=True)
     args.review_output.write_text(review_markdown(evidence), encoding="utf-8")

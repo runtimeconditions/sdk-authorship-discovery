@@ -38,7 +38,7 @@ Recursion follows semantic behavior rather than every package in the runtime dep
 
 ## Extension relationship
 
-AWS's public Smithy model and [`../../../extensions/aws-s3/model/runtimeconditions.smithy.yaml`](../../../extensions/aws-s3/model/runtimeconditions.smithy.yaml) generate the language-neutral S3 service mapping and immutable extension release. botocore then binds its versioned SDK surface to that canonical mapping.
+AWS's public Smithy model and [`../../../extensions/aws-s3/model/service-operations-semantic-bridge.yaml`](../../../extensions/aws-s3/model/service-operations-semantic-bridge.yaml) generate the language-neutral S3 service mapping and immutable extension release. botocore then binds its versioned SDK surface to that canonical mapping.
 
 The authoritative extension vocabulary contains 112 canonical operations. botocore 1.43.70 exposes 116 client methods because four deprecated SDK compatibility names remain; [`../../../extensions/aws-s3/model/botocore-sdk-annotations.yaml`](../../../extensions/aws-s3/model/botocore-sdk-annotations.yaml) maps them to their canonical operations. SDK aliases do not expand extension vocabulary.
 
@@ -48,7 +48,7 @@ The terminal botocore mapping records the exact extension identifier, extension 
 
 Maintainers review compact semantic inputs, not generated YAML:
 
-- [`../../../extensions/aws-s3/model/runtimeconditions.smithy.yaml`](../../../extensions/aws-s3/model/runtimeconditions.smithy.yaml) classifies authoritative S3 operations, resource identity paths, roles, and secondary resources once for all languages.
+- [`../../../extensions/aws-s3/model/service-operations-semantic-bridge.yaml`](../../../extensions/aws-s3/model/service-operations-semantic-bridge.yaml) translates authoritative S3 operations into extension classifications, resource identity paths, roles, and secondary resources once for all languages.
 - [`../../../extensions/aws-s3/model/botocore-sdk-annotations.yaml`](../../../extensions/aws-s3/model/botocore-sdk-annotations.yaml) records botocore-only compatibility operation aliases.
 - [`../../../extensions/aws-s3/model/boto3-wrapper-annotations.yaml`](../../../extensions/aws-s3/model/boto3-wrapper-annotations.yaml) identifies boto3 aliases, factories, handwritten wrappers, and two handwritten resource loads; its existing resource model supplies the rest of the resource graph.
 - [`../../../extensions/aws-s3/model/s3transfer-semantic-annotations.yaml`](../../../extensions/aws-s3/model/s3transfer-semantic-annotations.yaml) describes transfer entrypoints and classic or CRT execution paths.

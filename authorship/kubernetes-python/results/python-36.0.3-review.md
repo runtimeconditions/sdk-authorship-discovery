@@ -16,7 +16,7 @@ The complete transformed generator input joins statically to both generated Pyth
 - Retained authoritative snapshot semantic SHA-256: `ca58855c8fe1774f8859e957ec94ebb41b016ea726e986f166460eefce488cfd`
 - Transformed generator input SHA-256: `642b0eb32a68f326642aee70f3ff8530730616d2cc60b2994364ca199975bfb3`
 - Transformed generator input semantic SHA-256: `6df0f8c041370f2bd133a3fe8dce763e8e89dbffa84ee81b45401d32203a58e8`
-- Target authoritative inventory semantic SHA-256: `0ea1345e622231970d47bd80a0babc84a7425edf17596673e9112882b0b2a701`
+- Target service-mapping semantic SHA-256: `55e5307e0d614988f68742801ee384d6b0da8c9ee292af9e26da538d8060f59f`
 
 ## Generated surface
 
@@ -45,4 +45,4 @@ The focused SDK-owned semantic surface contains 27 distinct custom-resource meth
 
 ## Accepted validation boundary
 
-The real-profiler application proof is recorded separately from this source inventory. Literal built-in GVK selectors resolve through the extension-generated authoritative catalog, while an unmodeled CRD remains unresolved unless application source independently proves its plural resource and scope. Dynamic subresources, ResourceList fan-out, and constructor-only discovery traffic remain explicit boundaries.
+The real-profiler application proof is recorded separately from this SDK surface projection. Literal built-in GVK selectors resolve through the extension-generated authoritative catalog, while an unmodeled CRD remains unresolved unless application source independently proves its plural resource and scope. Dynamic subresources, ResourceList fan-out, and constructor-only discovery traffic remain explicit boundaries.

@@ -1,0 +1,46 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: nats-python-key-value
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/nats/python/key-value
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: nats
+  interface:
+    type: service
+    operations:
+    - resource: connection
+      action: connect
+    - resource: key_value
+      action: create
+      bucket: SESSIONS
+    - resource: key_value
+      action: write
+      bucket: SESSIONS
+    - resource: key_value
+      action: read
+      bucket: SESSIONS
+    - resource: key_value
+      action: watch
+      bucket: SESSIONS
+    - resource: key_value
+      action: inspect
+      bucket: SESSIONS
+    - resource: key_value
+      action: inspect
+      bucket: CACHE
+    - resource: key_value
+      action: write
+      bucket: CACHE
+    - resource: key_value
+      action: read
+      bucket: CACHE
+    - resource: key_value
+      action: watch
+      bucket: CACHE
+    - resource: key_value
+      action: delete
+      bucket: CACHE

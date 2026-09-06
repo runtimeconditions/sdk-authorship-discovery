@@ -1,0 +1,25 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: nats-python-core-messaging
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/nats/python/core-messaging
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: nats
+  interface:
+    type: service
+    operations:
+    - resource: connection
+      action: connect
+    - resource: subject
+      action: publish
+      subject: events.created
+    - resource: subject
+      action: subscribe
+      subject: events.created
+    - resource: subject
+      action: request
+      subject: events.lookup

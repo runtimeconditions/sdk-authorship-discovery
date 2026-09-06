@@ -8,7 +8,7 @@ The official `nats.go` v1.53.1 source was staged locally with package-owned Runt
 
 This result proves more than the original NATS slice: exact named-parameter validation, typed struct-field binding, local configuration-value flow, state-only delegation, resource state propagation, dependency identity, safe condition grouping, deterministic surface classification, and fixture-level acceptance all work together. It also exposes authoring burden and extension gaps that should not be hidden by the successful profile output.
 
-The extension now has a separate language-neutral Service Operations Catalog with 26 stable operations and a generated service mapping. The catalog is the reviewed fallback authority because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent NATS operation model. This establishes the shared semantic authority needed before reducing the Go authoring input or attempting a second NATS language. The current Go annotation still embeds equivalent condition templates, so the separation is implemented at the extension layer but not yet consumed through service-operation references by the SDK generator.
+NATS now has a separate language-neutral Service Operations Inventory with 26 stable operations, an extension-owned Service Operations Semantic Bridge, and a generated service mapping. The inventory is the reviewed fallback service authority because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent NATS operation model; the bridge owns its Runtime Conditions translation. The current Go annotation still embeds equivalent condition templates, so the next Go step is to consume service-operation references as the Python mapping already does.
 
 ## The contract being tested
 

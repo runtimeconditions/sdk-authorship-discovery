@@ -47,7 +47,7 @@ The extension and SDK repositories have separate maintenance lanes joined by exa
 | Change | Owner | Expected action |
 | --- | --- | --- |
 | Authoritative API model changes without Runtime Conditions semantic change | Extension automation | Validate automatically; retain the existing immutable extension release |
-| New, removed, or reclassified API behavior | Extension stakeholders | Review the focused Smithy overlay difference and publish a new immutable extension release |
+| New, removed, or reclassified API behavior | Extension stakeholders | Review the focused Service Operations Semantic Bridge difference and publish a new immutable extension release only when adapter-facing vocabulary changes |
 | Generated SDK names or modeled resources change without semantic drift | SDK automation | Regenerate and validate automatically |
 | SDK-only compatibility alias changes | SDK maintainer | Update the small alias annotation |
 | Handwritten wrapper, producer, state proxy, delegate, or execution path changes | Owning SDK maintainer | Update the focused wrapper, state-flow, or behavior annotation |
@@ -90,7 +90,7 @@ Owner alignment describes behavioral and version authority rather than company o
 
 ## Remaining maintainer interview questions
 
-1. Is this four-input review surface acceptable, and which existing teams would own the service overlay, SDK aliases, boto3 wrappers, and s3transfer behavior?
+1. Is this four-input review surface acceptable, and which existing teams would own the service semantic bridge, SDK aliases, boto3 wrappers, and s3transfer behavior?
 2. Would normal SDK artifacts accept the package-data addition, or is an automatically installed version-aligned companion preferable?
 3. Are `extension-review-required` and `sdk-review-required` diagnostics routed to the right people and precise enough for a release build?
 4. Is the execution-path vocabulary faithful to how s3transfer maintainers reason about classic, CRT, multipart, cleanup, and conditional follow-up operations?

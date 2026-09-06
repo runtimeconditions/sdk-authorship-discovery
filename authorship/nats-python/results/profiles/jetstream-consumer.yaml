@@ -1,0 +1,35 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: nats-python-jetstream-consumer
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/nats/python/jetstream-consumer
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: nats
+  interface:
+    type: service
+    operations:
+    - resource: connection
+      action: connect
+    - resource: consumer
+      action: create
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: consumer
+      action: inspect
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: consumer
+      action: inspect
+      stream: ORDERS
+    - resource: consumer
+      action: consume
+      stream: ORDERS
+      name: ORDERS_WORKER
+    - resource: consumer
+      action: delete
+      stream: ORDERS
+      name: ORDERS_WORKER

@@ -438,12 +438,17 @@ def normalize_path(path: str) -> str:
     return path
 
 
-def authoritative_index(inventory: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+def authoritative_index(service_mapping: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+    if service_mapping.get("kind") != "RuntimeConditionsServiceMapping":
+        raise ValueError("authoritative service mapping has the wrong kind")
     result: dict[tuple[str, str], dict[str, Any]] = {}
-    for operation in inventory.get("operations", []):
-        key = (normalize_path(operation["path"]), operation["method"])
+    for operation in service_mapping.get("operations", []):
+        endpoint = operation.get("endpoint")
+        if not isinstance(endpoint, dict):
+            raise ValueError(f"service operation {operation.get('name')!r} has no endpoint")
+        key = (normalize_path(endpoint["path"]), endpoint["method"])
         if key in result:
-            raise ValueError(f"authoritative inventory contains normalized endpoint collision {key}")
+            raise ValueError(f"authoritative service mapping contains normalized endpoint collision {key}")
         result[key] = operation
     return result
 
@@ -454,7 +459,7 @@ def placeholders(path: str) -> list[str]:
 
 def build_surface(
     source_root: Path,
-    authoritative_inventory_path: Path,
+    service_mapping_path: Path,
     repository: str,
     revision: str,
     version: str,
@@ -464,7 +469,7 @@ def build_surface(
     unprocessed_path = source_root / "kubernetes/swagger.json.unprocessed"
     processed_model = read_document(processed_path)
     unprocessed_model = read_document(unprocessed_path)
-    authoritative_inventory = read_document(authoritative_inventory_path)
+    service_mapping = read_document(service_mapping_path)
     delegations, annotation_coordinates = condition_delegations(source_root, annotations_path)
     stateful_flows = stateful_resource_flows(source_root, annotations_path)
     processed = processed_operations(processed_model)
@@ -482,7 +487,7 @@ def build_surface(
             missing = sorted(endpoints - set(symbols))
             extra = sorted(set(symbols) - endpoints)
             raise ValueError(f"{flavor} generated source differs from generator input: missing={missing[:5]} extra={extra[:5]}")
-    authoritative = authoritative_index(authoritative_inventory)
+    authoritative = authoritative_index(service_mapping)
     surfaces: list[dict[str, Any]] = []
     for endpoint in sorted(endpoints, key=lambda item: (processed[item]["operationId"], item[0], item[1])):
         path, method = endpoint
@@ -518,26 +523,26 @@ def build_surface(
             raise ValueError(f"{processed_operation['operationId']}: no authoritative endpoint for {method.upper()} {path}")
         entry["classification"] = "authoritative"
         entry["authoritative"] = {
-            "operationId": authoritative_operation["operationId"],
-            "projection": authoritative_operation["projection"],
+            "operationId": authoritative_operation["name"],
         }
-        if processed_operation["operationId"] != authoritative_operation["operationId"]:
+        if processed_operation["operationId"] != authoritative_operation["name"]:
             entry["authoritative"]["generatorRenamedOperation"] = True
-        if "watch" in primary["queryBindings"] and authoritative_operation["projection"].get("verb") == "list":
-            entry["conditionalProjection"] = {
+        condition_operation = authoritative_operation["conditions"][0]["operation"]
+        if "watch" in primary["queryBindings"] and condition_operation.get("verb") == "list":
+            entry["conditionalOperation"] = {
                 "when": {"argument": primary["queryBindings"]["watch"], "equals": True},
-                "projection": {**authoritative_operation["projection"], "verb": "watch"},
+                "operationOverride": {"verb": "watch"},
             }
         surfaces.append(entry)
 
     classifications = Counter(surface["classification"] for surface in surfaces)
     generator_operation_ids = Counter(surface["generatorOperationId"] for surface in surfaces)
     watch_capable = sum("watchArgument" in surface for surface in surfaces)
-    conditional_watch = sum("conditionalProjection" in surface for surface in surfaces)
+    conditional_watch = sum("conditionalOperation" in surface for surface in surfaces)
     renamed = sum(bool(surface.get("authoritative", {}).get("generatorRenamedOperation")) for surface in surfaces)
     normalized_path_joins = sum(
         surface["classification"] == "authoritative"
-        and surface["path"] != next(operation["path"] for operation in authoritative_inventory["operations"] if operation["operationId"] == surface["authoritative"]["operationId"])
+        and surface["path"] != next(operation["endpoint"]["path"] for operation in service_mapping["operations"] if operation["name"] == surface["authoritative"]["operationId"])
         for surface in surfaces
     )
     source_metadata = {
@@ -551,9 +556,10 @@ def build_surface(
             "sha256": sha256_file(processed_path),
             "semanticSha256": semantic_sha256(processed_model),
         },
-        "authoritativeInventory": {
-            "semanticSha256": authoritative_inventory["metadata"]["semanticSha256"],
-            "sourceSemanticSha256": authoritative_inventory["metadata"]["source"]["semanticSha256"],
+        "serviceMapping": {
+            "semanticSha256": service_mapping["metadata"]["semanticSha256"],
+            "sourceProjectionSemanticSha256": service_mapping["metadata"]["sourceProjectionSemanticSha256"],
+            "semanticBridgeSha256": service_mapping["metadata"]["semanticBridgeSha256"],
         },
     }
     if annotation_coordinates:
@@ -636,7 +642,7 @@ def review_markdown(surface: dict[str, Any]) -> str:
         f"- Retained authoritative snapshot semantic SHA-256: `{source['authoritativeSnapshot']['semanticSha256']}`",
         f"- Transformed generator input SHA-256: `{source['generatorInput']['sha256']}`",
         f"- Transformed generator input semantic SHA-256: `{source['generatorInput']['semanticSha256']}`",
-        f"- Target authoritative inventory semantic SHA-256: `{source['authoritativeInventory']['semanticSha256']}`",
+        f"- Target service-mapping semantic SHA-256: `{source['serviceMapping']['semanticSha256']}`",
         "",
         "## Generated surface",
         "",
@@ -665,7 +671,7 @@ def review_markdown(surface: dict[str, Any]) -> str:
         "",
         "## Accepted validation boundary",
         "",
-        "The real-profiler application proof is recorded separately from this source inventory. Literal built-in GVK selectors resolve through the extension-generated authoritative catalog, while an unmodeled CRD remains unresolved unless application source independently proves its plural resource and scope. Dynamic subresources, ResourceList fan-out, and constructor-only discovery traffic remain explicit boundaries.",
+        "The real-profiler application proof is recorded separately from this SDK surface projection. Literal built-in GVK selectors resolve through the extension-generated authoritative catalog, while an unmodeled CRD remains unresolved unless application source independently proves its plural resource and scope. Dynamic subresources, ResourceList fan-out, and constructor-only discovery traffic remain explicit boundaries.",
         "",
     ]
     return "\n".join(lines)
@@ -674,7 +680,7 @@ def review_markdown(surface: dict[str, Any]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-root", type=Path, required=True)
-    parser.add_argument("--authoritative-inventory", type=Path, required=True)
+    parser.add_argument("--service-mapping", type=Path, required=True)
     parser.add_argument("--repository", required=True)
     parser.add_argument("--revision", required=True)
     parser.add_argument("--version", required=True)
@@ -684,7 +690,7 @@ def main() -> int:
     args = parser.parse_args()
     surface = build_surface(
         args.source_root,
-        args.authoritative_inventory,
+        args.service_mapping,
         args.repository,
         args.revision,
         args.version,

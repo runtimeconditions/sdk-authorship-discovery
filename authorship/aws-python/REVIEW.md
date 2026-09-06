@@ -100,7 +100,7 @@ The index identifies the owning distribution, exact installed version, mapping i
 
 | Capability | Status |
 | --- | --- |
-| Generate canonical service semantics from AWS's authoritative public Smithy model plus a reviewed external Smithy overlay | Proved |
+| Generate canonical service semantics from AWS's authoritative public Smithy model plus a reviewed Service Operations Semantic Bridge | Proved |
 | Generate language and SDK surfaces from existing resource models and focused wrapper annotations | Proved for the Python case |
 | Split mappings across independently versioned behavior owners | Proved across three real Python distributions |
 | Validate package versions, modeled inventories, generated names, handwritten signatures, bindings, and delegates against source | Proved |
@@ -208,7 +208,7 @@ Those mechanics should not dominate this review. The detailed service operation 
 - [`../../../extensions/aws-s3/docs/validation.md`](../../../extensions/aws-s3/docs/validation.md)
 - [`../../../extensions/aws-s3/docs/sdk-author-workflow.md`](../../../extensions/aws-s3/docs/sdk-author-workflow.md)
 
-The reviewed Smithy service overlay and the three SDK-specific annotation files are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The generated YAML should only be inspected for representative spot checks or to investigate a failed validation claim.
+The reviewed S3 Service Operations Semantic Bridge and the three SDK-specific annotation files are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The generated YAML should only be inspected for representative spot checks or to investigate a failed validation claim.
 
 ## Current maintenance experiment
 

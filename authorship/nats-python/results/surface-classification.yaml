@@ -1,0 +1,256 @@
+apiVersion: runtimeconditions.io/sdk-authorship-evidence/v1alpha1
+kind: RuntimeConditionsSDKSurfaceClassification
+metadata:
+  distribution: nats-py
+  distributionVersion: 2.15.0
+  mappingSemanticSha256: 2bcb378c8a3f9d47a98a015ea6017a18d202ebb3fec6ab16bde90aad7f1a1020
+summary:
+  public: 84
+  mapped: 44
+  excluded: 27
+  deferred: 13
+  unclassified: 0
+scopes:
+- module: nats.aio.client
+  class: Client
+  publicMethods:
+  - client_id
+  - client_ip
+  - close
+  - connect
+  - connected_server_version
+  - connected_url
+  - discovered_servers
+  - drain
+  - flush
+  - force_reconnect
+  - is_closed
+  - is_connected
+  - is_connecting
+  - is_draining
+  - is_draining_pubs
+  - is_reconnecting
+  - jetstream
+  - jsm
+  - last_error
+  - max_payload
+  - new_inbox
+  - pending_data_size
+  - publish
+  - request
+  - rtt
+  - server_pool
+  - servers
+  - set_server_pool
+  - ssl_context
+  - subscribe
+  mapped:
+  - connect
+  - jetstream
+  - jsm
+  - publish
+  - request
+  - subscribe
+  excluded:
+  - method: client_id
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: client_ip
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: close
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: connected_server_version
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: connected_url
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: discovered_servers
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: drain
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: flush
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: force_reconnect
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: is_closed
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: is_connected
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: is_connecting
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: is_draining
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: is_draining_pubs
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: is_reconnecting
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: last_error
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: max_payload
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: new_inbox
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: pending_data_size
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: rtt
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: server_pool
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: servers
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: set_server_pool
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  - method: ssl_context
+    reason: Connection lifecycle, local state, diagnostics, and transport controls add no adapter-actionable demand beyond the mapped connection.
+  deferred: []
+  unclassified: []
+- module: nats.js.manager
+  class: JetStreamManager
+  publicMethods:
+  - account_info
+  - add_consumer
+  - add_stream
+  - consumer_info
+  - consumers_info
+  - delete_consumer
+  - delete_msg
+  - delete_stream
+  - find_stream_name_by_subject
+  - get_last_msg
+  - get_msg
+  - pause_consumer
+  - purge_stream
+  - resume_consumer
+  - stream_info
+  - streams_info
+  - streams_info_iterator
+  - update_stream
+  mapped:
+  - add_consumer
+  - add_stream
+  - consumer_info
+  - consumers_info
+  - delete_consumer
+  - delete_stream
+  - stream_info
+  - update_stream
+  excluded: []
+  deferred:
+  - method: account_info
+    reason: Service-wide inspection does not prove the resource identity required by the current extension operations.
+  - method: delete_msg
+    reason: Stream message inspection and mutation need adapter-actionable operations that the current extension does not define.
+  - method: find_stream_name_by_subject
+    reason: Service-wide inspection does not prove the resource identity required by the current extension operations.
+  - method: get_last_msg
+    reason: Stream message inspection and mutation need adapter-actionable operations that the current extension does not define.
+  - method: get_msg
+    reason: Stream message inspection and mutation need adapter-actionable operations that the current extension does not define.
+  - method: pause_consumer
+    reason: Consumer delivery lifecycle mutations need adapter-actionable operations that the current extension does not define.
+  - method: purge_stream
+    reason: Stream message inspection and mutation need adapter-actionable operations that the current extension does not define.
+  - method: resume_consumer
+    reason: Consumer delivery lifecycle mutations need adapter-actionable operations that the current extension does not define.
+  - method: streams_info
+    reason: Service-wide inspection does not prove the resource identity required by the current extension operations.
+  - method: streams_info_iterator
+    reason: Service-wide inspection does not prove the resource identity required by the current extension operations.
+  unclassified: []
+- module: nats.js.client
+  class: JetStreamContext
+  publicMethods:
+  - create_key_value
+  - create_object_store
+  - delete_key_value
+  - delete_object_store
+  - is_status_msg
+  - key_value
+  - object_store
+  - publish
+  - publish_async
+  - publish_async_completed
+  - publish_async_pending
+  - pull_subscribe
+  - pull_subscribe_bind
+  - subscribe
+  - subscribe_bind
+  mapped:
+  - create_key_value
+  - create_object_store
+  - delete_key_value
+  - delete_object_store
+  - key_value
+  - object_store
+  - publish
+  - publish_async
+  - pull_subscribe_bind
+  - subscribe_bind
+  excluded:
+  - method: is_status_msg
+    reason: Local asynchronous status and message classification do not introduce an external dependency operation.
+  - method: publish_async_completed
+    reason: Local asynchronous status and message classification do not introduce an external dependency operation.
+  - method: publish_async_pending
+    reason: Local asynchronous status and message classification do not introduce an external dependency operation.
+  deferred:
+  - method: pull_subscribe
+    reason: These methods may inspect, create, bind, and consume depending on arguments and server state, so one fixed operation would overstate source-proven demand.
+  - method: subscribe
+    reason: These methods may inspect, create, bind, and consume depending on arguments and server state, so one fixed operation would overstate source-proven demand.
+  unclassified: []
+- module: nats.js.kv
+  class: KeyValue
+  publicMethods:
+  - create
+  - delete
+  - get
+  - history
+  - keys
+  - purge
+  - purge_deletes
+  - put
+  - status
+  - update
+  - watch
+  - watchall
+  mapped:
+  - create
+  - delete
+  - get
+  - history
+  - keys
+  - purge
+  - purge_deletes
+  - put
+  - status
+  - update
+  - watch
+  - watchall
+  excluded: []
+  deferred: []
+  unclassified: []
+- module: nats.js.object_store
+  class: ObjectStore
+  publicMethods:
+  - delete
+  - get
+  - get_info
+  - list
+  - put
+  - seal
+  - status
+  - update_meta
+  - watch
+  mapped:
+  - delete
+  - get
+  - get_info
+  - list
+  - put
+  - status
+  - update_meta
+  - watch
+  excluded: []
+  deferred:
+  - method: seal
+    reason: Sealing mutates bucket configuration, which is not represented by the current extension actions.
+  unclassified: []

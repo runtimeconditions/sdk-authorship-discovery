@@ -1,0 +1,40 @@
+apiVersion: runtimeconditions.io/v1alpha1
+kind: RuntimeConditionsProfile
+metadata:
+  name: nats-python-object-store
+workload:
+  uri: https://github.com/runtimeconditions/sdk-authorship-discovery/tree/main/nats/python/object-store
+  version: 0.1.0
+extensions:
+- https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+conditions:
+- kind: nats
+  interface:
+    type: service
+    operations:
+    - resource: connection
+      action: connect
+    - resource: object_store
+      action: create
+      bucket: ASSETS
+    - resource: object_store
+      action: write
+      bucket: ASSETS
+    - resource: object_store
+      action: read
+      bucket: ASSETS
+    - resource: object_store
+      action: watch
+      bucket: ASSETS
+    - resource: object_store
+      action: inspect
+      bucket: ASSETS
+    - resource: object_store
+      action: inspect
+      bucket: ARCHIVE
+    - resource: object_store
+      action: read
+      bucket: ARCHIVE
+    - resource: object_store
+      action: delete
+      bucket: ARCHIVE

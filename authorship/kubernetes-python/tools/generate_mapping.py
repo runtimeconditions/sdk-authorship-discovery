@@ -305,7 +305,7 @@ def build_mapping(surface: dict[str, Any], service_mapping: dict[str, Any], exte
     require(extension_coordinates.get("id"), extension["metadata"]["id"], "extension id")
     require(extension_coordinates.get("version"), extension["metadata"]["version"], "extension version")
     require(extension_coordinates.get("semanticSha256"), extension["metadata"]["semanticSha256"], "extension semantic digest")
-    require(surface["metadata"]["source"]["authoritativeInventory"]["semanticSha256"], service_mapping["metadata"]["sourceInventorySemanticSha256"], "authoritative inventory semantic digest")
+    require(surface["metadata"]["source"]["serviceMapping"]["semanticSha256"], service_mapping["metadata"]["semanticSha256"], "service mapping semantic digest")
     service_operations = operation_index(service_mapping)
     validator = extension_validator(extension)
     operations: list[dict[str, Any]] = []

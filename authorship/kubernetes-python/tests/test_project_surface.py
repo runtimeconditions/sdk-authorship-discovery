@@ -45,17 +45,17 @@ class PythonSurfaceProjectionTest(unittest.TestCase):
             }
             (source_root / "scripts/swagger.json").write_text(__import__("json").dumps(processed), encoding="utf-8")
             (source_root / "kubernetes/swagger.json.unprocessed").write_text(__import__("json").dumps(processed), encoding="utf-8")
-            inventory_path = source_root / "inventory.yaml"
-            inventory_path.write_text(
+            service_mapping_path = source_root / "service-mapping.yaml"
+            service_mapping_path.write_text(
                 yaml.safe_dump(
                     {
-                        "metadata": {"semanticSha256": "inventory", "source": {"semanticSha256": "source"}},
+                        "kind": "RuntimeConditionsServiceMapping",
+                        "metadata": {"semanticSha256": "mapping", "sourceProjectionSemanticSha256": "projection", "semanticBridgeSha256": "bridge"},
                         "operations": [
                             {
-                                "operationId": "readCoreV1NamespacedConfigMap",
-                                "path": "/api/v1/namespaces/{namespace}/configmaps/{name}",
-                                "method": "get",
-                                "projection": {"form": "resource", "verb": "get", "apiGroup": "", "apiVersion": "v1", "resource": "configmaps", "scope": "namespaced"},
+                                "name": "readCoreV1NamespacedConfigMap",
+                                "endpoint": {"path": "/api/v1/namespaces/{namespace}/configmaps/{name}", "method": "get"},
+                                "conditions": [{"kind": "kubernetes", "interfaceType": "api", "operation": {"verb": "get", "apiGroup": "", "apiVersion": "v1", "resource": "configmaps", "scope": "namespaced"}}],
                             }
                         ],
                     },
@@ -63,7 +63,7 @@ class PythonSurfaceProjectionTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            surface = build_surface(source_root, inventory_path, "https://example.test/python.git", "revision", "1.0.0")
+            surface = build_surface(source_root, service_mapping_path, "https://example.test/python.git", "revision", "1.0.0")
         self.assertEqual(surface["metadata"]["surfaceCount"], 1)
         self.assertEqual(surface["metadata"]["summary"]["syncSymbols"], 1)
         self.assertEqual(surface["metadata"]["summary"]["asyncSymbols"], 1)

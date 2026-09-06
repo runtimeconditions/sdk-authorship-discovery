@@ -8,7 +8,7 @@ metadata:
   service: kubernetes-api
   repository: https://github.com/kubernetes-client/python.git
   revision: 67e7d9abfc6fe6629fa650d9b0abf4c99ef8c39c
-  sourceSurfaceSemanticSha256: dd56a8f4dbdb802d3f3dd911fbd46570a68e710d1914c814571c45b4cf2a26d0
+  sourceSurfaceSemanticSha256: 1495a900bff716bc6919fe1f67964980292dbb62a721c941eb398f1efadb807b
   serviceMappingSemanticSha256: 55e5307e0d614988f68742801ee384d6b0da8c9ee292af9e26da538d8060f59f
   operationCount: 944
   publicSymbolCount: 1875

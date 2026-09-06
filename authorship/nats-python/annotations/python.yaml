@@ -1,0 +1,501 @@
+schemaVersion: 1
+metadata:
+  name: nats.python.service
+  distribution: nats-py
+  distributionVersion: 2.15.0
+  service: nats
+  repository: https://github.com/nats-io/nats.py.git
+  revision: 24626a43631a21af2e35261cf0a8ec615fd35c78
+extension:
+  id: https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
+  version: 0.1.0
+  semanticSha256: 84a3797300ed1912858b393ca46512f2363ae838cb38bce26e687017026bb7e2
+serviceMapping:
+  name: nats.service
+  semanticSha256: 791de4f22212d2c6e61952a154ca6c1bd1904c6c430c766cb27680a8aeb01cb7
+python:
+  valueTypes:
+  - id: nats.stream_config
+    symbols:
+    - nats.js.api.StreamConfig
+    fields:
+      name:
+        argument:
+          parameter: name
+      subjects:
+        argument:
+          parameter: subjects
+  - id: nats.consumer_config
+    symbols:
+    - nats.js.api.ConsumerConfig
+    fields:
+      name:
+        anyOf:
+        - argument:
+            parameter: name
+        - argument:
+            parameter: durable_name
+  - id: nats.key_value_config
+    symbols:
+    - nats.js.api.KeyValueConfig
+    fields:
+      bucket:
+        argument:
+          parameter: bucket
+  factories:
+  - id: connect
+    symbols:
+    - nats.connect
+    operationRef: connection.connect
+    produces:
+      stateType: nats.connection
+      dependencyIdentity: new
+      bindings: {}
+  - id: client-constructor
+    symbols:
+    - nats.NATS
+    - nats.aio.client.Client
+    produces:
+      stateType: nats.connection
+      dependencyIdentity: new
+      bindings: {}
+  calls:
+  - id: client-connect
+    symbols:
+    - module: nats.aio.client
+      class: Client
+      method: connect
+    receiverState: nats.connection
+    operationRef: connection.connect
+  - id: core-publish
+    symbols:
+    - module: nats.aio.client
+      class: Client
+      method: publish
+    receiverState: nats.connection
+    operationRef: subject.publish
+    operationBindings:
+      subject:
+        argument:
+          parameter: subject
+  - id: core-subscribe
+    symbols:
+    - module: nats.aio.client
+      class: Client
+      method: subscribe
+    receiverState: nats.connection
+    operationRef: subject.subscribe
+    operationBindings:
+      subject:
+        argument:
+          parameter: subject
+  - id: core-request
+    symbols:
+    - module: nats.aio.client
+      class: Client
+      method: request
+    receiverState: nats.connection
+    operationRef: subject.request
+    operationBindings:
+      subject:
+        argument:
+          parameter: subject
+  - id: jetstream-context
+    symbols:
+    - module: nats.aio.client
+      class: Client
+      method: jetstream
+    - module: nats.aio.client
+      class: Client
+      method: jsm
+    receiverState: nats.connection
+    produces:
+      stateType: nats.jetstream
+      dependencyIdentity: inherit
+      bindings: {}
+  - id: stream-inspect
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: stream_info
+    receiverState: nats.jetstream
+    operationRef: stream.inspect
+    operationBindings:
+      name:
+        argument:
+          parameter: name
+  - id: stream-create
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: add_stream
+    receiverState: nats.jetstream
+    operationRef: stream.create
+    operationBindings:
+      name:
+        anyOf:
+        - argument:
+            parameter: config
+            field: name
+        - argument:
+            parameter: name
+      subjects:
+        anyOf:
+        - argument:
+            parameter: config
+            field: subjects
+        - argument:
+            parameter: subjects
+    produces:
+      stateType: nats.stream
+      dependencyIdentity: inherit
+      bindings:
+        name:
+          anyOf:
+          - argument:
+              parameter: config
+              field: name
+          - argument:
+              parameter: name
+  - id: stream-update
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: update_stream
+    receiverState: nats.jetstream
+    operationRef: stream.update
+    operationBindings:
+      name:
+        anyOf:
+        - argument:
+            parameter: config
+            field: name
+        - argument:
+            parameter: name
+      subjects:
+        anyOf:
+        - argument:
+            parameter: config
+            field: subjects
+        - argument:
+            parameter: subjects
+  - id: stream-delete
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: delete_stream
+    receiverState: nats.jetstream
+    operationRef: stream.delete
+    operationBindings:
+      name:
+        argument:
+          parameter: name
+  - id: stream-publish
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: publish
+    - module: nats.js.client
+      class: JetStreamContext
+      method: publish_async
+    receiverState: nats.jetstream
+    operationRef: stream.publish
+    operationBindings:
+      subject:
+        argument:
+          parameter: subject
+  - id: consumer-inspect
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: consumer_info
+    receiverState: nats.jetstream
+    operationRef: consumer.inspect
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: consumer
+  - id: consumers-inspect
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: consumers_info
+    receiverState: nats.jetstream
+    operationRef: consumer.inspect
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+  - id: consumer-create
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: add_consumer
+    receiverState: nats.jetstream
+    operationRef: consumer.create
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        anyOf:
+        - argument:
+            parameter: config
+            field: name
+        - argument:
+            parameter: name
+        - argument:
+            parameter: durable_name
+  - id: consumer-delete
+    symbols:
+    - module: nats.js.manager
+      class: JetStreamManager
+      method: delete_consumer
+    receiverState: nats.jetstream
+    operationRef: consumer.delete
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: consumer
+  - id: consumer-subscribe-bind
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: subscribe_bind
+    receiverState: nats.jetstream
+    operationRef: consumer.consume
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: consumer
+  - id: consumer-pull-subscribe-bind
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: pull_subscribe_bind
+    receiverState: nats.jetstream
+    operationRef: consumer.consume
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        anyOf:
+        - argument:
+            parameter: name
+        - argument:
+            parameter: durable
+        - argument:
+            parameter: consumer
+  - id: key-value-inspect
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: key_value
+    receiverState: nats.jetstream
+    operationRef: key_value.inspect
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
+    produces:
+      stateType: nats.key_value
+      dependencyIdentity: inherit
+      bindings:
+        bucket:
+          argument:
+            parameter: bucket
+  - id: key-value-create
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: create_key_value
+    receiverState: nats.jetstream
+    operationRef: key_value.create
+    operationBindings:
+      bucket:
+        anyOf:
+        - argument:
+            parameter: config
+            field: bucket
+        - argument:
+            parameter: bucket
+    produces:
+      stateType: nats.key_value
+      dependencyIdentity: inherit
+      bindings:
+        bucket:
+          anyOf:
+          - argument:
+              parameter: config
+              field: bucket
+          - argument:
+              parameter: bucket
+  - id: key-value-delete
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: delete_key_value
+    receiverState: nats.jetstream
+    operationRef: key_value.delete
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
+  - id: object-store-inspect
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: object_store
+    receiverState: nats.jetstream
+    operationRef: object_store.inspect
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
+    produces:
+      stateType: nats.object_store
+      dependencyIdentity: inherit
+      bindings:
+        bucket:
+          argument:
+            parameter: bucket
+  - id: object-store-create
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: create_object_store
+    receiverState: nats.jetstream
+    operationRef: object_store.create
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
+    produces:
+      stateType: nats.object_store
+      dependencyIdentity: inherit
+      bindings:
+        bucket:
+          argument:
+            parameter: bucket
+  - id: object-store-delete
+    symbols:
+    - module: nats.js.client
+      class: JetStreamContext
+      method: delete_object_store
+    receiverState: nats.jetstream
+    operationRef: object_store.delete
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
+  callGroups:
+  - idPrefix: key-value-read
+    symbols:
+      module: nats.js.kv
+      class: KeyValue
+    methods:
+    - get
+    - keys
+    - history
+    receiverState: nats.key_value
+    operationRef: key_value.read
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: key-value-write
+    symbols:
+      module: nats.js.kv
+      class: KeyValue
+    methods:
+    - put
+    - create
+    - update
+    - delete
+    - purge
+    - purge_deletes
+    receiverState: nats.key_value
+    operationRef: key_value.write
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: key-value-watch
+    symbols:
+      module: nats.js.kv
+      class: KeyValue
+    methods:
+    - watch
+    - watchall
+    receiverState: nats.key_value
+    operationRef: key_value.watch
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: key-value-inspect
+    symbols:
+      module: nats.js.kv
+      class: KeyValue
+    methods:
+    - status
+    receiverState: nats.key_value
+    operationRef: key_value.inspect
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: object-store-read
+    symbols:
+      module: nats.js.object_store
+      class: ObjectStore
+    methods:
+    - get_info
+    - get
+    - list
+    receiverState: nats.object_store
+    operationRef: object_store.read
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: object-store-write
+    symbols:
+      module: nats.js.object_store
+      class: ObjectStore
+    methods:
+    - put
+    - update_meta
+    - delete
+    receiverState: nats.object_store
+    operationRef: object_store.write
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: object-store-watch
+    symbols:
+      module: nats.js.object_store
+      class: ObjectStore
+    methods:
+    - watch
+    receiverState: nats.object_store
+    operationRef: object_store.watch
+    operationBindings:
+      bucket:
+        state: bucket
+  - idPrefix: object-store-inspect
+    symbols:
+      module: nats.js.object_store
+      class: ObjectStore
+    methods:
+    - status
+    receiverState: nats.object_store
+    operationRef: object_store.inspect
+    operationBindings:
+      bucket:
+        state: bucket

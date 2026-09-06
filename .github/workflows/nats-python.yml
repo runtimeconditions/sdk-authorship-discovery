@@ -1,0 +1,110 @@
+name: NATS Python SDK authorship
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/nats-python.yml
+      - authorship/nats-python/**
+      - nats/python/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/nats-python.yml
+      - authorship/nats-python/**
+      - nats/python/**
+  workflow_dispatch:
+    inputs:
+      extensions_ref:
+        description: Immutable runtimeconditions/extensions commit or review ref
+        required: true
+        default: main
+        type: string
+      profiler_ref:
+        description: Immutable runtimeconditions/python-rc-profiler commit or review ref
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  pinned-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out SDK authorship experiment
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          path: sdk
+
+      - name: Check out extension semantics
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: runtimeconditions/extensions
+          ref: ${{ inputs.extensions_ref || 'main' }}
+          path: extensions
+
+      - name: Check out Python profiler
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: runtimeconditions/python-rc-profiler
+          ref: ${{ inputs.profiler_ref || 'main' }}
+          path: python-rc-profiler
+
+      - name: Check out profiler demo fixtures
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: runtimeconditions/rc-demos
+          path: rc-demos
+
+      - name: Check out pinned nats-py source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: nats-io/nats.py
+          ref: 24626a43631a21af2e35261cf0a8ec615fd35c78
+          path: nats-python-source
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Install authoring and profiler dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --requirement sdk/authorship/nats-python/requirements.txt
+          python -m pip install --disable-pip-version-check --editable './python-rc-profiler[test]'
+
+      - name: Regenerate and compare the SDK mapping
+        run: |
+          python sdk/authorship/nats-python/tools/generate_mapping.py \
+            --annotations sdk/authorship/nats-python/annotations/python.yaml \
+            --service-mapping extensions/nats-service/model/generated/nats-service-mapping.yaml \
+            --extension extensions/nats-service/releases/0.1.0/runtimeconditions.extension.yaml \
+            --source-root nats-python-source/nats \
+            --output "$RUNNER_TEMP/runtimeconditions.sdk-mapping.yaml"
+          cmp sdk/authorship/nats-python/mappings/runtimeconditions.sdk-mapping.yaml "$RUNNER_TEMP/runtimeconditions.sdk-mapping.yaml"
+
+      - name: Rebuild and compare the public-surface classification
+        run: |
+          python sdk/authorship/nats-python/tools/project_surface.py \
+            --source-root nats-python-source/nats \
+            --mapping sdk/authorship/nats-python/mappings/runtimeconditions.sdk-mapping.yaml \
+            --policy sdk/authorship/nats-python/maintenance/surface-policy.yaml \
+            --output "$RUNNER_TEMP/surface-classification.yaml"
+          cmp sdk/authorship/nats-python/results/surface-classification.yaml "$RUNNER_TEMP/surface-classification.yaml"
+
+      - name: Run real-profiler fixture acceptance
+        run: |
+          python sdk/authorship/nats-python/tools/verify_fixtures.py \
+            --profiler-root python-rc-profiler \
+            --sdk-source nats-python-source/nats \
+            --mapping sdk/authorship/nats-python/mappings/runtimeconditions.sdk-mapping.yaml \
+            --fixtures-root sdk/nats/python \
+            --extensions-root extensions \
+            --expected-root sdk/authorship/nats-python/results/profiles
+
+      - name: Run Python profiler regression suite
+        run: python -m pytest -q python-rc-profiler
