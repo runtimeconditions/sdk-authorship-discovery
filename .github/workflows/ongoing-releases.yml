@@ -35,17 +35,17 @@ concurrency:
 
 jobs:
   observe-compatible-root-graph:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
 
     steps:
       - name: Check out SDK authorship experiment
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           path: sdk
 
       - name: Check out accepted extension semantics
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: runtimeconditions/extensions
           ref: ${{ inputs.extensions_ref || 'main' }}
@@ -53,19 +53,19 @@ jobs:
 
       - name: Check out Python profiler consumer
         if: ${{ inputs.validation_level != 'static' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: runtimeconditions/python-rc-profiler
           ref: ${{ inputs.profiler_ref || 'main' }}
           path: python-profiler
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.12"
+          python-version: "3.12.14"
 
       - name: Install build and runtime prerequisites
-        run: python -m pip install --disable-pip-version-check -r sdk/authorship/aws-python/requirements.txt
+        run: python -m pip install --disable-pip-version-check --constraint sdk/authorship/aws-python/constraints-ci.txt --requirement sdk/authorship/aws-python/requirements.txt
 
       - name: Install Python profiler consumer
         if: ${{ inputs.validation_level != 'static' }}
@@ -121,7 +121,11 @@ jobs:
       - name: Read maintenance classification
         id: result
         if: steps.candidate.outputs.available == 'true' && hashFiles(format('maintenance-evidence/{0}/run.yaml', steps.candidate.outputs.id)) != ''
-        run: echo "classification=$(python -c 'import sys,yaml; print(yaml.safe_load(open(sys.argv[1]))["classification"])' "maintenance-evidence/${{ steps.candidate.outputs.id }}/run.yaml")" >> "$GITHUB_OUTPUT"
+        env:
+          OBSERVATION_ID: ${{ steps.candidate.outputs.id }}
+        run: |
+          classification="$(python -c 'import sys,yaml; print(yaml.safe_load(open(sys.argv[1]))["classification"])' "maintenance-evidence/$OBSERVATION_ID/run.yaml")"
+          printf 'classification=%s\n' "$classification" >> "$GITHUB_OUTPUT"
 
       - name: Record durable observation
         if: steps.result.outputs.classification == 'automatic' || steps.result.outputs.classification == 'extension-review-required' || steps.result.outputs.classification == 'sdk-review-required'
@@ -182,7 +186,7 @@ jobs:
 
       - name: Upload complete maintenance evidence
         if: always() && steps.candidate.outputs.available == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aws-python-ongoing-maintenance-${{ github.run_id }}
           path: |
@@ -193,15 +197,22 @@ jobs:
 
       - name: Publish maintenance summary
         if: always() && steps.candidate.outputs.available == 'true' && hashFiles(format('maintenance-evidence/{0}/report.md', steps.candidate.outputs.id)) != ''
-        run: cat "maintenance-evidence/${{ steps.candidate.outputs.id }}/report.md" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          OBSERVATION_ID: ${{ steps.candidate.outputs.id }}
+        run: cat "maintenance-evidence/$OBSERVATION_ID/report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report no new observation
         if: steps.candidate.outputs.available == 'false'
-        run: echo "The latest compatible boto3-rooted owner graph and selected extension semantic digest have already been observed." >> "$GITHUB_STEP_SUMMARY"
+        run: printf '%s\n' 'The latest compatible boto3-rooted owner graph and selected extension semantic digest have already been observed.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report observation awaiting review
         if: steps.pending.outputs.exists == 'true'
-        run: echo "Observation ${{ steps.candidate.outputs.id }} is already awaiting review in pull request #${{ steps.pending.outputs.number }}; the expensive maintenance proof was not repeated." >> "$GITHUB_STEP_SUMMARY"
+        env:
+          OBSERVATION_ID: ${{ steps.candidate.outputs.id }}
+          PR_NUMBER: ${{ steps.pending.outputs.number }}
+        run: |
+          printf 'Observation %s is already awaiting review in pull request #%s; the expensive maintenance proof was not repeated.\n' \
+            "$OBSERVATION_ID" "$PR_NUMBER" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Enforce maintenance classification
         if: steps.candidate.outputs.available == 'true' && steps.pending.outputs.exists != 'true' && steps.result.outputs.classification != 'automatic'

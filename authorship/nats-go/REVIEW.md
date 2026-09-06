@@ -8,9 +8,11 @@ The official `nats.go` v1.53.1 source was staged locally with package-owned Runt
 
 This result proves more than the original NATS slice: exact named-parameter validation, typed struct-field binding, local configuration-value flow, state-only delegation, resource state propagation, dependency identity, safe condition grouping, deterministic surface classification, and fixture-level acceptance all work together. It also exposes authoring burden and extension gaps that should not be hidden by the successful profile output.
 
+The extension now has a separate language-neutral Service Operations Catalog with 26 stable operations and a generated service mapping. The catalog is the reviewed fallback authority because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent NATS operation model. This establishes the shared semantic authority needed before reducing the Go authoring input or attempting a second NATS language. The current Go annotation still embeds equivalent condition templates, so the separation is implemented at the extension layer but not yet consumed through service-operation references by the SDK generator.
+
 ## The contract being tested
 
-The extension supplies the adapter-actionable semantics. The SDK integration selects exact language symbols and binds extension fields to named parameters, typed fields, or prior producer state. The SDK's real function and type declarations validate those selections. The application supplies concrete values through ordinary source code. The profiler resolves only generic Go constructs and emits nothing when a required value or identity is not statically proven.
+The extension and language-neutral service mapping supply the adapter-actionable semantics and stable operation identities. The SDK integration selects exact language symbols and binds extension fields to named parameters, typed fields, or prior producer state. The SDK's real function and type declarations validate those selections. The application supplies concrete values through ordinary source code. The profiler resolves only generic Go constructs and emits nothing when a required value or identity is not statically proven.
 
 No layer invents another layer's facts. The extension does not name Go methods. The mapping does not define new extension actions. The profiler does not know NATS fields such as `Name`, `Bucket`, `Subjects`, or `Subject`. The application developer does not maintain SDK mappings.
 
@@ -79,10 +81,10 @@ The current local-value analysis is intentionally shallow. It does not propagate
 
 The NATS extension still needs the semantic review represented by the 36 deferred operations. The current profiles are valid against the current extension, but validity is not the same as full SDK coverage.
 
-The annotation format is too large to accept as the final SDK-author experience. The next ergonomics investigation should identify how much of the 963-line input can be projected from Go source, extension schemas, reusable rule forms, and concise maintainer overlays while keeping every semantic choice visible and deterministic.
+The annotation format is too large to accept as the final SDK-author experience. Its embedded condition templates and YAML anchors should be replaced by explicit references to the neutral service mapping and ordinary anchor-free authoring constructs. The next ergonomics investigation should identify how much of the 963-line input can be projected from Go source, the service mapping, reusable rule forms, and concise maintainer overlays while keeping every semantic choice visible and deterministic.
 
 The release workflow is not yet an upstream NATS repository integration or release watcher. The deterministic generator, source audit, package staging, and acceptance harness are the components from which that workflow can be built after maintainer review.
 
 ## Recommended review decision
 
-Approve the generic profiler contract and the fixture evidence separately from the current authoring syntax. If the contract is sound, the next investigation should be the maintainer-facing input reduction, using the current 963-line annotation and the four-symbol consumer-reset release delta as measurable cases. In parallel, the deferred semantic groups should be presented to NATS maintainers and adapter authors as explicit questions rather than silently assigned to existing actions.
+Review the 26-operation neutral service mapping as the semantic authority. If it is sound, the next implementation should convert the current Go annotations to exact service-operation references and an anchor-free maintainer format, require the generated SDK mapping to record the service-mapping digest, and prove semantic equivalence through the existing six-application acceptance gate. Cross-language integrations remain deferred until that NATS authoring result is reviewed.

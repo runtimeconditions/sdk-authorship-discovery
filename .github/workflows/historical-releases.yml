@@ -31,17 +31,17 @@ permissions:
 
 jobs:
   replay:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
 
     steps:
       - name: Check out SDK authorship experiment
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           path: sdk
 
       - name: Check out extension semantics
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: runtimeconditions/extensions
           ref: ${{ inputs.extensions_ref }}
@@ -49,19 +49,19 @@ jobs:
 
       - name: Check out Python profiler consumer
         if: ${{ inputs.validation_level != 'static' }}
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: runtimeconditions/python-rc-profiler
           ref: ${{ inputs.profiler_ref }}
           path: python-profiler
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.12"
+          python-version: "3.12.14"
 
       - name: Install build and runtime prerequisites
-        run: python -m pip install --disable-pip-version-check -r sdk/authorship/aws-python/requirements.txt
+        run: python -m pip install --disable-pip-version-check --constraint sdk/authorship/aws-python/constraints-ci.txt --requirement sdk/authorship/aws-python/requirements.txt
 
       - name: Install Python profiler consumer
         if: ${{ inputs.validation_level != 'static' }}
@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload maintenance evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aws-python-historical-maintenance-${{ github.run_id }}
           path: maintenance-evidence

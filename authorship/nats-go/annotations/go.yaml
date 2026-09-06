@@ -9,7 +9,7 @@ metadata:
 extension:
   id: https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
   version: 0.1.0
-  semanticSha256: b67877d056715d94583ecaf19a90429b31b52507399ffb3d06b0ab092f39995e
+  semanticSha256: 84a3797300ed1912858b393ca46512f2363ae838cb38bce26e687017026bb7e2
 go:
   calls:
   - id: connect

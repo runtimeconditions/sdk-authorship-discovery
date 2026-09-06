@@ -25,12 +25,12 @@ def operations(condition: dict[str, Any]) -> list[dict[str, Any]]:
     return condition["interface"]["operations"]
 
 
-def validate_complete_fixture(profile: dict[str, Any], extension_model: dict[str, Any]) -> None:
+def validate_complete_fixture(profile: dict[str, Any], service_operations_catalog: dict[str, Any]) -> None:
     conditions = profile.get("conditions", [])
     if len(conditions) != 2:
         raise ValueError(f"complete-service: expected two independently identified NATS conditions, found {len(conditions)}")
     primary, secondary = conditions
-    expected_forms = {(resource, action) for resource, form in extension_model["operationForms"].items() for action in form["actions"]}
+    expected_forms = {(item["operation"]["resource"], item["operation"]["action"]) for item in service_operations_catalog["operations"]}
     actual_forms = {(operation["resource"], operation["action"]) for operation in operations(primary)}
     missing = sorted(expected_forms - actual_forms)
     if missing:
@@ -102,7 +102,7 @@ def main() -> int:
             if actual != expected:
                 raise ValueError(f"{fixture}: real-profiler output differs from the reviewed profile")
             if fixture == "complete-service":
-                validate_complete_fixture(actual, read_document(extensions_root / "nats-service/model/runtimeconditions.yaml"))
+                validate_complete_fixture(actual, read_document(extensions_root / "nats-service/model/service-operations-catalog.yaml"))
             print(f"{fixture}: compiled, profile valid, reviewed output matched")
     return 0
 

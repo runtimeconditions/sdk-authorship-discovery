@@ -6,6 +6,12 @@
 
 This experiment tests a primarily handwritten SDK against the official `github.com/nats-io/nats.go` module. It covers Core NATS and the modern JetStream publisher, stream, consumer, key/value, and object-store interfaces through six unchanged Go applications under [`../../nats/go`](../../nats/go).
 
+## Language-neutral service authority
+
+The NATS extension maintains a 26-operation language-neutral Service Operations Catalog at [`../../../extensions/nats-service/model/service-operations-catalog.yaml`](../../../extensions/nats-service/model/service-operations-catalog.yaml) because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent operation model to project. The catalog generates [`../../../extensions/nats-service/model/generated/nats-service-mapping.yaml`](../../../extensions/nats-service/model/generated/nats-service-mapping.yaml). Stable names such as `subject.publish`, `stream.create`, and `consumer.consume` fix the Runtime Conditions operation template and its required or optional fields once for every NATS SDK language.
+
+The current Go annotation predates those references and still repeats the fixed condition templates. That is the next authoring change, not an accepted permanent duplication: replace each template with an exact service-operation reference, record the service-mapping digest as a mapping dependency, and prove that the generated Go mapping and all fixture profiles remain semantically unchanged. The neutral catalog is complete first so this conversion can be measured against a reviewed authority rather than invented inside the Go tool.
+
 ## SDK author input
 
 [`annotations/go.yaml`](annotations/go.yaml) is the reviewed SDK-integration input for this release. It has 35 individually described calls and 20 call groups covering another 52 methods. The generator expands those rules into 87 exact call records: 86 adapter-actionable public operations and one state-only bridge from the Core NATS connection to the JetStream API. Six generic state types preserve resource coordinates and the source-proven identity of the NATS connection on which later calls depend.
@@ -20,7 +26,7 @@ No SDK public method changes, annotations in Go source, generated Go code, runti
 
 ## Generic binding contract
 
-The extension owns the condition kind, interface, operation forms, validation rules, and adapter-actionable distinctions. The SDK mapping selects an exact public symbol and names the parameter or typed struct field that supplies each extension field. The Go function signature and type declarations validate those names. Ordinary application source supplies the concrete value.
+The extension and its language-neutral service mapping own the condition kind, interface, operation forms, validation rules, stable operation names, and adapter-actionable distinctions. The SDK mapping selects an exact public symbol and names the parameter or typed struct field that supplies each extension field. The Go function signature and type declarations validate those names. Ordinary application source supplies the concrete value.
 
 For example, the NATS mapping says that a stream operation's `name` comes from the `Name` field of the method's `cfg` parameter. The profiler contains no knowledge of `Name`, `StreamConfig`, buckets, subjects, or NATS. It follows a direct local initializer such as `streamConfig := jetstream.StreamConfig{Name: "ORDERS"}` or an initialized local `var` declaration and emits only the values that remain statically proven. A later reassignment or field mutation invalidates that local value, and an unresolved value emits no widened condition.
 

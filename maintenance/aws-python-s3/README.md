@@ -36,6 +36,8 @@ Generated mappings, source checkouts, temporary package trees, and wheels remain
 5. Store complete temporary artifacts for 90 days and create a focused pull request containing durable evidence and the updated observation cursor; while that pull request remains open, scheduled runs recognize it and do not repeat the expensive proof.
 6. Create or update a deduplicated issue when extension review, SDK review, or automation repair is required.
 
+The hosted Ubuntu release, Python patch release, build dependencies, and third-party Actions are pinned to the versions used by the accepted proof. The repository checks parse every workflow, syntax-check every embedded Bash program, exercise the pending-review summary path, and reject mutable Action tags before a workflow change reaches `main`. Extension, profiler, and observed SDK refs remain deliberate moving inputs: a failure after one of those revisions changes is evidence of an actual monitored integration change rather than routine runner drift.
+
 The observer is deliberately scoped to a boto3-rooted graph because that is the application and packaging surface proved by this experiment. A future owner-isolated lane is still needed to observe a botocore or s3transfer release that cannot participate in any valid boto3 graph.
 
 ## Local single-release run
