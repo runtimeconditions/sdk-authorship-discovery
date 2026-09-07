@@ -81,7 +81,7 @@ The final Kubernetes Python generator processes v36.0.0 through v36.0.3 with no 
 
 ## Expansion policy
 
-The next investigation axis is SDK architecture rather than another AWS service. The Kubernetes case has now exercised generated methods, dynamic generated endpoints, a higher-order callable wrapper, and a discovery-created stateful resource. NATS is next and will test a primarily handwritten Go client before OpenTelemetry, OpenFeature, and Dapr test exporter, provider, and sidecar delegation models. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
+The next investigation axis remains SDK architecture rather than another AWS service. Kubernetes has exercised generated methods, dynamic generated endpoints, a higher-order callable wrapper, and a discovery-created stateful resource. NATS has now exercised a primarily handwritten client in Go and Python against one language-neutral service mapping, proving semantic reuse while exposing substantial remaining binding and state-authoring burden. OpenTelemetry, OpenFeature, and Dapr remain the next cohort members for exporter, provider, and sidecar delegation models. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
 
 New languages belong in separate independently buildable projects under `s3/<language>/`. Adding a corpus project does not authorize a profiler change; language-profiler expansion is discussed separately before implementation.
 

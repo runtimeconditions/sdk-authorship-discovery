@@ -2,7 +2,7 @@
 
 ## Status
 
-**Working local SDK integration and real-profiler acceptance proof; ready for semantic and SDK-maintainer-experience review, not public release.**
+**Working cross-language service-authority and real-profiler acceptance proof; ready for semantic and SDK-maintainer-experience review, not public release.**
 
 This experiment tests a primarily handwritten SDK against the official `github.com/nats-io/nats.go` module. It covers Core NATS and the modern JetStream publisher, stream, consumer, key/value, and object-store interfaces through six unchanged Go applications under [`../../nats/go`](../../nats/go).
 
@@ -10,13 +10,13 @@ This experiment tests a primarily handwritten SDK against the official `github.c
 
 The language-neutral 26-operation Service Operations Inventory lives in the separate [`runtimeconditions/service-operations-inventories`](https://github.com/runtimeconditions/service-operations-inventories) repository because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent operation model to project. The NATS extension's [`service-operations-semantic-bridge.yaml`](../../../extensions/nats-service/model/service-operations-semantic-bridge.yaml) translates that neutral source into the generated [`nats-service-mapping.yaml`](../../../extensions/nats-service/model/generated/nats-service-mapping.yaml). Stable names such as `subject.publish`, `stream.create`, and `consumer.consume` are shared by every NATS SDK language, while the bridge—not the inventory—owns their Runtime Conditions meaning.
 
-The current Go annotation predates those references and still repeats the fixed condition templates. That is the next authoring change, not an accepted permanent duplication: replace each template with an exact service-operation reference, record the service-mapping digest as a mapping dependency, and prove that the generated Go mapping and all fixture profiles remain semantically unchanged. The neutral inventory and bridge now establish the reviewed authority needed for that conversion.
+The Go annotation now references those canonical operations and records service-mapping semantic digest `791de4f22212d2c6e61952a154ca6c1bd1904c6c430c766cb27680a8aeb01cb7`. The generator resolves each reference against the service mapping, validates its required and optional bindings, and expands it into the self-contained Condition template consumed by the existing Go profiler. The generated repetition is build output rather than SDK-maintainer input; this conversion required no profiler change and produced the same reviewed application profiles.
 
 ## SDK author input
 
 [`annotations/go.yaml`](annotations/go.yaml) is the reviewed SDK-integration input for this release. It has 35 individually described calls and 20 call groups covering another 52 methods. The generator expands those rules into 87 exact call records: 86 adapter-actionable public operations and one state-only bridge from the Core NATS connection to the JetStream API. Six generic state types preserve resource coordinates and the source-proven identity of the NATS connection on which later calls depend.
 
-This is materially larger than the original 20-call proof and must not be described as a small maintainer input. The annotation file is currently 963 lines. Much of that size is repeated extension templates and binding structure that a production authoring tool should reduce, but it remains part of the current human review surface. This experiment proves the contract and measures its burden; it does not establish that the present YAML ergonomics are acceptable for adoption.
+This is materially larger than the original 20-call proof and must not be described as a small maintainer input. The anchor-free annotation file is currently 892 lines. It contains 54 canonical operation references covering all 26 NATS operation forms; call-group expansion produces 86 mapped call records. Removing authored Condition templates and YAML anchors reduced the file by only 71 lines because repeated SDK binding and state structure remains. This experiment proves the authority boundary, but it also demonstrates that operation references alone do not make the present YAML ergonomics acceptable for adoption.
 
 [`maintenance/surface-policy.yaml`](maintenance/surface-policy.yaml) scopes the public SDK surface and records why a public symbol is mapped, excluded from Runtime Conditions, or deferred for semantic review. The generated [`results/surface-coverage.yaml`](results/surface-coverage.yaml) reports 186 scoped public symbols: 86 mapped, 64 excluded because they add no adapter-actionable demand, 36 deferred, and zero unclassified. These classifications are maintenance evidence only. They are not shipped in the SDK mapping or emitted in an application profile.
 
@@ -32,6 +32,8 @@ For example, the NATS mapping says that a stream operation's `name` comes from t
 
 The mapping also declares generic producer state and dependency identity. `nats.Connect` starts a new dependency identity, `jetstream.New(connection)` inherits it from its argument, and resource-producing calls inherit it from their receiver. Conditions merge only when the extension, condition shape, and source-proven dependency identity match. Two separately assigned connections therefore remain two Runtime Conditions.
 
+The shipped generated mapping retains both the canonical `operationRef` and its resolved `conditionTemplate`. The reference records the service mapping join, while the template preserves compatibility with the current Go profiler's self-contained mapping contract. The build rejects unknown operation references, stale service-mapping coordinates, missing required bindings, fields absent from the service operation, and any attempt to author a Condition template directly in the Go overlay.
+
 ## Local packaging
 
 [`tools/stage_module.py`](tools/stage_module.py) copies the generated mapping into `runtimeconditions/mappings/nats-service.yaml` in a local NATS module source tree and writes `runtimeconditions/index.yaml` with the exact module version and mapping digest. Go modules include these ordinary non-Go files without a package manifest or registry publication change. The fixtures use a temporary Go workspace replacement that points the normal `github.com/nats-io/nats.go v1.53.1` dependency at this staged source tree.
@@ -43,7 +45,7 @@ The files shipped by an SDK release are the generated mapping and distribution i
 Generate the mapping from the SDK repository root:
 
 ```sh
-.venv/bin/python authorship/nats-go/tools/generate_mapping.py --annotations authorship/nats-go/annotations/go.yaml --extension ../extensions/nats-service/releases/0.1.0/runtimeconditions.extension.yaml --output authorship/nats-go/mappings/runtimeconditions.sdk-mapping.yaml
+.venv/bin/python authorship/nats-go/tools/generate_mapping.py --annotations authorship/nats-go/annotations/go.yaml --service-mapping ../extensions/nats-service/model/generated/nats-service-mapping.yaml --extension ../extensions/nats-service/releases/0.1.0/runtimeconditions.extension.yaml --output authorship/nats-go/mappings/runtimeconditions.sdk-mapping.yaml
 ```
 
 Validate the mapping and classify the public surface against a released NATS source tree:
@@ -60,3 +62,5 @@ Build the real Go profiler, then run all six applications through it and compare
 ```
 
 [`REVIEW.md`](REVIEW.md) is the cohesive review document for the contract, author burden, acceptance evidence, historical replay, and unresolved decisions.
+
+[`../../.github/workflows/nats-go.yml`](../../.github/workflows/nats-go.yml) reproduces the pinned-release proof on relevant changes and manual runs: service-mapping compilation tests, deterministic mapping generation, public-surface classification, all six real-profiler fixtures, and the complete Go profiler regression suite. It is not yet an ongoing NATS release watcher.

@@ -2,13 +2,13 @@
 
 ## Review status
 
-**Classification: working real-profiler integration with an explicit and measurable SDK-author burden; not yet suitable to present as a finalized authoring experience.**
+**Classification: working two-language service-authority and real-profiler integration with an explicit and measurable SDK-author burden; not yet suitable to present as a finalized authoring experience.**
 
 The official `nats.go` v1.53.1 source was staged locally with package-owned Runtime Conditions metadata. Six ordinary applications compiled against that staged module, and the real Go profiler produced extension-valid profiles for all six without Runtime Conditions declarations or configuration in application code. The comprehensive application exercises every operation form currently defined by the NATS extension and proves that two independently created connections remain separate Runtime Conditions.
 
 This result proves more than the original NATS slice: exact named-parameter validation, typed struct-field binding, local configuration-value flow, state-only delegation, resource state propagation, dependency identity, safe condition grouping, deterministic surface classification, and fixture-level acceptance all work together. It also exposes authoring burden and extension gaps that should not be hidden by the successful profile output.
 
-NATS now has a separate language-neutral Service Operations Inventory with 26 stable operations, an extension-owned Service Operations Semantic Bridge, and a generated service mapping. The inventory is the reviewed fallback service authority because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent NATS operation model; the bridge owns its Runtime Conditions translation. The current Go annotation still embeds equivalent condition templates, so the next Go step is to consume service-operation references as the Python mapping already does.
+NATS now has a separate language-neutral Service Operations Inventory with 26 stable operations, an extension-owned Service Operations Semantic Bridge, and a generated service mapping. The inventory is the reviewed fallback service authority because this workflow has no adequate authoritative Smithy, OpenAPI, or equivalent NATS operation model; the bridge owns its Runtime Conditions translation. Both the Go and Python SDK integrations consume the same service mapping and exact semantic digest. Neither language overlay maintains canonical NATS Condition templates.
 
 ## The contract being tested
 
@@ -22,9 +22,9 @@ Producer state is also generic. A mapping may declare that a call creates a new 
 
 ## What an SDK maintainer would be asked to own
 
-The current human-authored integration has 35 individual call descriptions and 20 grouped rules that expand to 52 additional methods. Together they generate 87 call records: 86 mapped public operations plus the state-only `jetstream.New` bridge. The input defines six state types. It is 963 lines of YAML.
+The current human-authored integration has 35 individual call descriptions and 20 grouped rules that expand to 52 additional methods. Together they generate 87 call records: 86 mapped public operations plus the state-only `jetstream.New` bridge. The input defines six state types, uses 54 operation references spanning all 26 canonical NATS operations, and is 892 lines of anchor-free YAML.
 
-That size is a warning, not a success metric. Call groups avoid individually repeating mechanically identical methods, but the present format still repeats templates and binding structures heavily. Before asking NATS maintainers to adopt this, shared authoring tooling should derive more boilerplate, present a concise review diff, and keep the maintainer focused on semantic decisions. We should evaluate the contract using this evidence without normalizing a 963-line hand-reviewed file as the expected end state.
+That size is a warning, not a success metric. Replacing authored Condition templates and YAML aliases removed the service-semantic duplication, but it reduced the overlay by only 71 lines, or approximately 7.4%, because SDK-specific binding and state structure still dominates. Call groups avoid individually repeating mechanically identical methods, but the present format remains too repetitive. Before asking NATS maintainers to adopt this, shared authoring tooling should derive more boilerplate, present a concise review diff, and keep the maintainer focused on SDK-specific decisions. We should evaluate the authority boundary as successful without normalizing an 892-line hand-reviewed file as the expected end state.
 
 The public-surface policy is a second review surface. It covers 186 public symbols and requires every one to be mapped, explicitly excluded, or deferred. A normal release with no surface change should produce no review work. A new or changed operation should produce a focused classification request. The policy and its report are maintenance controls; the report is not published in an SDK mapping and the profile contains no coverage percentage or unresolved-observation list.
 
@@ -40,6 +40,14 @@ The intended division of responsibility is:
 | Add runtime code or a runtime dependency | No | Not applicable |
 
 The two files added to an SDK release are one generated mapping and one small index. The experiment's coverage reports, fixture profiles, tools, and review documents are not package obligations.
+
+## Cross-language service-authority result
+
+The Go and Python integrations now record the same generated NATS service-mapping digest: `791de4f22212d2c6e61952a154ca6c1bd1904c6c430c766cb27680a8aeb01cb7`. The Go overlay contains 54 authored references to all 26 canonical operation forms; the Python overlay contains 30 authored references to 25 forms because the classic `nats-py` distribution does not expose a distinct `consumer.update` method. That difference remains an SDK-surface fact rather than duplicated or altered service meaning.
+
+The Go generator resolves each `operationRef` into the same Condition kind, interface type, fixed operation fields, and required or optional binding contract defined by the service mapping. It rejects unknown references, stale service-mapping identity, missing required bindings, extra fields, and authored `conditionTemplate` blocks. The generated Go mapping retains both the canonical reference and a resolved template so the existing profiler can consume a self-contained mapping without learning a new contract. This is deliberate build-time compatibility, not a second service-semantic authority. Removing YAML aliases and retaining canonical references increased the generated file from 38,687 to 44,120 raw bytes, but gzip size increased by only 173 bytes, from 2,543 to 2,716; portability and traceability therefore cost little in the shipped static artifact.
+
+The six Go and six Python fixtures are not source-equivalent applications and therefore should not be described as producing identical operation lists. They use different values and exercise different SDK methods. The valid cross-language equivalence claim is narrower and stronger: every referenced operation in both languages resolves through one service mapping, overlapping references resolve to the same Condition form, and each real profiler emits only extension-valid Conditions from its application's source-proven values.
 
 ## Current source-surface result
 
@@ -81,10 +89,10 @@ The current local-value analysis is intentionally shallow. It does not propagate
 
 The NATS extension still needs the semantic review represented by the 36 deferred operations. The current profiles are valid against the current extension, but validity is not the same as full SDK coverage.
 
-The annotation format is too large to accept as the final SDK-author experience. Its embedded condition templates and YAML anchors should be replaced by explicit references to the neutral service mapping and ordinary anchor-free authoring constructs. The next ergonomics investigation should identify how much of the 963-line input can be projected from Go source, the service mapping, reusable rule forms, and concise maintainer overlays while keeping every semantic choice visible and deterministic.
+The annotation format is still too large to accept as the final SDK-author experience after removing embedded Condition templates and YAML anchors. The next ergonomics investigation should identify how much of the remaining 892-line binding and state input can be projected from Go source, reusable language-level rule forms, and concise maintainer overlays while keeping every SDK-specific choice visible and deterministic.
 
-The release workflow is not yet an upstream NATS repository integration or release watcher. The deterministic generator, source audit, package staging, and acceptance harness are the components from which that workflow can be built after maintainer review.
+The pinned-release GitHub Actions workflow now runs the generator tests, verifies deterministic mapping output, rebuilds the source-surface classification, executes all six fixtures through the real profiler, and runs the profiler regression suite. It is not yet an upstream NATS repository integration or ongoing release watcher. The deterministic generator, source audit, package staging, and acceptance harness are the components from which that workflow can be built after maintainer review.
 
-## Recommended review decision
+## Result and next decision
 
-Review the 26-operation neutral service mapping as the semantic authority. If it is sound, the next implementation should convert the current Go annotations to exact service-operation references and an anchor-free maintainer format, require the generated SDK mapping to record the service-mapping digest, and prove semantic equivalence through the existing six-application acceptance gate. Cross-language integrations remain deferred until that NATS authoring result is reviewed.
+Accept the NATS experiment as evidence that one reviewed service authority can feed two independently shaped SDK languages without duplicating Condition semantics in their authoring overlays. Do not accept it as evidence that the current SDK-authoring syntax is sufficiently compact. The next independent SDK case should test whether the operation-reference and state/binding boundaries survive a different SDK architecture; separately, future Go authoring research should reduce the remaining mechanical structure using evidence from more than NATS before defining common shortcuts.

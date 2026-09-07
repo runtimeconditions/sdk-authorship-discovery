@@ -112,19 +112,98 @@ def validate_call_structure(call: dict[str, Any]) -> tuple[str, str, str, str]:
     return symbol["package"], function, receiver, method
 
 
+def service_operations(service_mapping: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    operations: dict[str, dict[str, Any]] = {}
+    for operation in service_mapping.get("operations", []):
+        name = operation.get("name") if isinstance(operation, dict) else None
+        if not isinstance(name, str) or not name or name in operations:
+            raise ValueError(f"service mapping contains an invalid or duplicate operation name {name!r}")
+        conditions = operation.get("conditions")
+        if not isinstance(conditions, list) or len(conditions) != 1:
+            raise ValueError(f"service operation {name!r} must produce exactly one Condition for the current Go mapping format")
+        condition = conditions[0]
+        if not isinstance(condition, dict) or not isinstance(condition.get("kind"), str) or not isinstance(condition.get("interfaceType"), str) or not isinstance(condition.get("operation"), dict):
+            raise ValueError(f"service operation {name!r} contains an invalid Condition")
+        bindings = condition.get("bindings")
+        if not isinstance(bindings, dict) or not isinstance(bindings.get("required"), list) or not isinstance(bindings.get("optional"), list):
+            raise ValueError(f"service operation {name!r} contains an invalid binding contract")
+        required = bindings["required"]
+        optional = bindings["optional"]
+        if any(not isinstance(field, str) or not field for field in [*required, *optional]) or len(set([*required, *optional])) != len([*required, *optional]):
+            raise ValueError(f"service operation {name!r} contains invalid or duplicate binding fields")
+        operations[name] = operation
+    if not operations:
+        raise ValueError("service mapping must define at least one operation")
+    return operations
+
+
+def compile_condition(call: dict[str, Any], operations: dict[str, dict[str, Any]], validator: Draft202012Validator) -> None:
+    call_id = call["id"]
+    if "conditionTemplate" in call:
+        raise ValueError(f"{call_id}: authoring input must use operationRef rather than conditionTemplate")
+    operation_ref = call.get("operationRef")
+    if operation_ref is None:
+        if "produces" not in call:
+            raise ValueError(f"{call_id}: a call must reference a service operation, produce state, or both")
+        return
+    if not isinstance(operation_ref, str) or not operation_ref:
+        raise ValueError(f"{call_id}: operationRef must be a non-empty string")
+    service_operation = operations.get(operation_ref)
+    if service_operation is None:
+        raise ValueError(f"{call_id}: unknown service operation {operation_ref!r}")
+    condition = service_operation["conditions"][0]
+    contract = condition["bindings"]
+    required = set(contract["required"])
+    optional = set(contract["optional"])
+    supplied = set(call.get("operationBindings", {}))
+    if not required <= supplied:
+        raise ValueError(f"{call_id}: missing sources for required fields {sorted(required - supplied)}")
+    if not supplied <= required | optional:
+        raise ValueError(f"{call_id}: supplies fields absent from service operation {sorted(supplied - required - optional)}")
+    optional_required = sorted(field for field in required if call["operationBindings"][field].get("optional", False))
+    if optional_required:
+        raise ValueError(f"{call_id}: required service-operation fields cannot use optional sources {optional_required}")
+    template = {
+        "kind": condition["kind"],
+        "interfaceType": condition["interfaceType"],
+        "operation": copy.deepcopy(condition["operation"]),
+    }
+    candidate_operation = copy.deepcopy(template["operation"])
+    for field in supplied:
+        candidate_operation[field] = ["runtimeconditions-validation-placeholder"] if field == "subjects" else "runtimeconditions-validation-placeholder"
+    candidate = {"kind": template["kind"], "interface": {"type": template["interfaceType"], "operations": [candidate_operation]}}
+    errors = list(validator.iter_errors(candidate))
+    if errors:
+        raise ValueError(f"{call_id}: service operation does not produce an extension-valid Condition: {errors[0].message}")
+    call["conditionTemplate"] = template
+
+
+def validate_authorities(annotations: dict[str, Any], extension: dict[str, Any], service_mapping: dict[str, Any]) -> None:
+    configured_extension = annotations["extension"]
+    for actual in (extension["metadata"], service_mapping["extension"]):
+        for field in ("id", "version", "semanticSha256"):
+            if configured_extension.get(field) != actual.get(field):
+                raise ValueError(f"extension {field} mismatch")
+    configured_service = annotations["serviceMapping"]
+    actual_service = service_mapping.get("metadata", {})
+    if configured_service.get("name") != actual_service.get("name") or configured_service.get("semanticSha256") != actual_service.get("semanticSha256"):
+        raise ValueError("service mapping coordinates do not match annotations")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--annotations", type=Path, required=True)
+    parser.add_argument("--service-mapping", type=Path, required=True)
     parser.add_argument("--extension", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     annotations = read_document(args.annotations)
+    service_mapping = read_document(args.service_mapping)
     extension = read_document(args.extension)
+    validate_authorities(annotations, extension, service_mapping)
     configured = annotations["extension"]
-    actual = extension["metadata"]
-    for field in ("id", "version", "semanticSha256"):
-        if configured.get(field) != actual.get(field):
-            raise ValueError(f"extension {field} mismatch: annotation {configured.get(field)!r}, release {actual.get(field)!r}")
+    configured_service = annotations["serviceMapping"]
+    operations = service_operations(service_mapping)
     schema = extension["spec"]["schemas"][0]["schema"]
     validator = Draft202012Validator(schema)
     calls = expanded_calls(annotations["go"])
@@ -139,18 +218,7 @@ def main() -> int:
         if symbol_key in seen_symbols:
             raise ValueError(f"{call_id}: symbol duplicates call {seen_symbols[symbol_key]!r}")
         seen_symbols[symbol_key] = call_id
-        template = call.get("conditionTemplate")
-        if template is None:
-            if "produces" not in call:
-                raise ValueError(f"{call_id}: a call must emit a condition, produce state, or both")
-            continue
-        operation = dict(template["operation"])
-        for field in call.get("operationBindings", {}):
-            operation.setdefault(field, ["runtimeconditions-validation-placeholder"] if field == "subjects" else "runtimeconditions-validation-placeholder")
-        candidate = {"kind": template["kind"], "interface": {"type": template["interfaceType"], "operations": [operation]}}
-        errors = list(validator.iter_errors(candidate))
-        if errors:
-            raise ValueError(f"{call_id}: invalid condition template: {errors[0].message}")
+        compile_condition(call, operations, validator)
     metadata = annotations["metadata"]
     go_body = {"calls": calls}
     mapping = {
@@ -167,7 +235,7 @@ def main() -> int:
             "callCount": len(calls),
             "semanticSha256": semantic_sha256(go_body),
         },
-        "dependencies": [{"kind": "extension", **configured}],
+        "dependencies": [{"kind": "extension", **configured}, {"kind": "serviceMapping", **configured_service}],
         "extension": configured,
         "go": go_body,
     }

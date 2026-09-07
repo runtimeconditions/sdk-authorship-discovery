@@ -9,12 +9,15 @@ metadata:
   repository: https://github.com/nats-io/nats.go.git
   revision: db1375fcffae2eb0b4ced1b7bad4d47c4447e4ac
   callCount: 87
-  semanticSha256: 657209f51562bb4ef2bff8356bc23984d471643e6553b107ca61843abbcf36eb
+  semanticSha256: 412f6ca7deee248e363dcbd384c5f2daa48ae8eb89caca4285f4d6d441b29a1f
 dependencies:
 - kind: extension
   id: https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
   version: 0.1.0
   semanticSha256: 84a3797300ed1912858b393ca46512f2363ae838cb38bce26e687017026bb7e2
+- kind: serviceMapping
+  name: nats.service
+  semanticSha256: 791de4f22212d2c6e61952a154ca6c1bd1904c6c430c766cb27680a8aeb01cb7
 extension:
   id: https://runtimeconditions.io/extensions/nats-service/0.1.0/runtimeconditions.extension.yaml
   version: 0.1.0
@@ -25,64 +28,68 @@ go:
     symbol:
       package: github.com/nats-io/nats.go
       function: Connect
+    operationRef: connection.connect
+    produces:
+      stateType: nats.connection
+      dependencyIdentity: new
+      bindings: {}
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: connection
         action: connect
-    produces:
-      stateType: nats.connection
-      dependencyIdentity: new
-      bindings: {}
   - id: core-publish
     symbol:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: Publish
     receiverState: nats.connection
+    operationRef: subject.publish
+    operationBindings:
+      subject:
+        argument:
+          parameter: subj
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: publish
-    operationBindings:
-      subject:
-        argument:
-          parameter: subj
   - id: core-subscribe
     symbol:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: Subscribe
     receiverState: nats.connection
+    operationRef: subject.subscribe
+    operationBindings:
+      subject:
+        argument:
+          parameter: subj
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: subscribe
-    operationBindings:
-      subject:
-        argument:
-          parameter: subj
   - id: core-request
     symbol:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: Request
     receiverState: nats.connection
+    operationRef: subject.request
+    operationBindings:
+      subject:
+        argument:
+          parameter: subj
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: request
-    operationBindings:
-      subject:
-        argument:
-          parameter: subj
   - id: jetstream-new
     symbol:
       package: github.com/nats-io/nats.go/jetstream
@@ -101,44 +108,41 @@ go:
       receiver: Publisher
       method: Publish
     receiverState: nats.jetstream
+    operationRef: stream.publish
+    operationBindings:
+      subject:
+        argument:
+          parameter: subject
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: stream
         action: publish
-    operationBindings:
-      subject:
-        argument:
-          parameter: subject
   - id: jetstream-publish-async
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Publisher
       method: PublishAsync
     receiverState: nats.jetstream
+    operationRef: stream.publish
+    operationBindings:
+      subject:
+        argument:
+          parameter: subject
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: stream
         action: publish
-    operationBindings:
-      subject:
-        argument:
-          parameter: subject
   - id: create-stream
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamManager
       method: CreateStream
     receiverState: nats.jetstream
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: stream
-        action: create
+    operationRef: stream.create
     operationBindings:
       name:
         argument:
@@ -157,82 +161,94 @@ go:
           argument:
             parameter: cfg
             field: Name
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: stream
+        action: create
   - id: inspect-stream
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamManager
       method: Stream
     receiverState: nats.jetstream
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: stream
-        action: inspect
+    operationRef: stream.inspect
     operationBindings:
-      name: &id001
+      name:
         argument:
           parameter: stream
     produces:
       stateType: nats.stream
       dependencyIdentity: inherit
       bindings:
-        name: *id001
+        name:
+          argument:
+            parameter: stream
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: stream
+        action: inspect
   - id: inspect-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: Consumer
     receiverState: nats.jetstream
+    operationRef: consumer.inspect
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: consumer
+    produces:
+      stateType: nats.consumer
+      bindings:
+        stream:
+          argument:
+            parameter: stream
+        name:
+          argument:
+            parameter: consumer
+      dependencyIdentity: inherit
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: inspect
-    operationBindings:
-      stream: *id001
-      name: &id002
-        argument:
-          parameter: consumer
-    produces:
-      stateType: nats.consumer
-      bindings:
-        stream: *id001
-        name: *id002
-      dependencyIdentity: inherit
   - id: consume
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: Consume
     receiverState: nats.consumer
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: consumer
-        action: consume
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
       name:
         state: name
         optional: true
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: consumer
+        action: consume
   - id: create-key-value
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValueManager
       method: CreateKeyValue
     receiverState: nats.jetstream
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: key_value
-        action: create
+    operationRef: key_value.create
     operationBindings:
-      bucket: &id003
+      bucket:
         argument:
           parameter: cfg
           field: Bucket
@@ -240,193 +256,230 @@ go:
       stateType: nats.key_value
       dependencyIdentity: inherit
       bindings:
-        bucket: *id003
+        bucket:
+          argument:
+            parameter: cfg
+            field: Bucket
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: key_value
+        action: create
   - id: inspect-key-value
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValueManager
       method: KeyValue
     receiverState: nats.jetstream
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: key_value
-        action: inspect
+    operationRef: key_value.inspect
     operationBindings:
-      bucket: &id004
+      bucket:
         argument:
           parameter: bucket
     produces:
       stateType: nats.key_value
       dependencyIdentity: inherit
       bindings:
-        bucket: *id004
+        bucket:
+          argument:
+            parameter: bucket
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: key_value
+        action: inspect
   - id: key-value-get
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Get
     receiverState: nats.key_value
+    operationRef: key_value.read
+    operationBindings:
+      bucket:
+        state: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: read
-    operationBindings:
-      bucket: &id005
-        state: bucket
   - id: key-value-put
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Put
     receiverState: nats.key_value
+    operationRef: key_value.write
+    operationBindings:
+      bucket:
+        state: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: write
-    operationBindings:
-      bucket: *id005
   - id: key-value-watch
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Watch
     receiverState: nats.key_value
+    operationRef: key_value.watch
+    operationBindings:
+      bucket:
+        state: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: watch
-    operationBindings:
-      bucket: *id005
   - id: create-object-store
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStoreManager
       method: CreateObjectStore
     receiverState: nats.jetstream
+    operationRef: object_store.create
+    operationBindings:
+      bucket:
+        argument:
+          parameter: cfg
+          field: Bucket
+    produces:
+      stateType: nats.object_store
+      dependencyIdentity: inherit
+      bindings:
+        bucket:
+          argument:
+            parameter: cfg
+            field: Bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: create
-    operationBindings:
-      bucket: *id003
-    produces:
-      stateType: nats.object_store
-      dependencyIdentity: inherit
-      bindings:
-        bucket: *id003
   - id: inspect-object-store
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStoreManager
       method: ObjectStore
     receiverState: nats.jetstream
+    operationRef: object_store.inspect
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
+    produces:
+      stateType: nats.object_store
+      dependencyIdentity: inherit
+      bindings:
+        bucket:
+          argument:
+            parameter: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: inspect
-    operationBindings:
-      bucket: *id004
-    produces:
-      stateType: nats.object_store
-      dependencyIdentity: inherit
-      bindings:
-        bucket: *id004
   - id: object-store-get-string
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: GetString
     receiverState: nats.object_store
+    operationRef: object_store.read
+    operationBindings:
+      bucket:
+        state: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: read
-    operationBindings:
-      bucket: *id005
   - id: object-store-put-string
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: PutString
     receiverState: nats.object_store
+    operationRef: object_store.write
+    operationBindings:
+      bucket:
+        state: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: write
-    operationBindings:
-      bucket: *id005
   - id: object-store-watch
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: Watch
     receiverState: nats.object_store
+    operationRef: object_store.watch
+    operationBindings:
+      bucket:
+        state: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: watch
-    operationBindings:
-      bucket: *id005
   - id: core-publish-message
     symbol:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: PublishMsg
     receiverState: nats.connection
-    conditionTemplate: &id006
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: subject
-        action: publish
+    operationRef: subject.publish
     operationBindings:
       subject:
         argument:
           parameter: m
           field: Subject
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: subject
+        action: publish
   - id: core-publish-request
     symbol:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: PublishRequest
     receiverState: nats.connection
-    conditionTemplate: *id006
+    operationRef: subject.publish
     operationBindings:
       subject:
         argument:
           parameter: subj
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: subject
+        action: publish
   - id: update-stream
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamManager
       method: UpdateStream
     receiverState: nats.jetstream
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: stream
-        action: update
+    operationRef: stream.update
     operationBindings:
-      name: &id007
+      name:
         argument:
           parameter: cfg
           field: Name
@@ -439,51 +492,61 @@ go:
       stateType: nats.stream
       dependencyIdentity: inherit
       bindings:
-        name: *id007
+        name:
+          argument:
+            parameter: cfg
+            field: Name
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: stream
+        action: update
   - id: delete-stream
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamManager
       method: DeleteStream
     receiverState: nats.jetstream
+    operationRef: stream.delete
+    operationBindings:
+      name:
+        argument:
+          parameter: stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: stream
         action: delete
-    operationBindings:
-      name: *id001
   - id: stream-info
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Stream
       method: Info
     receiverState: nats.stream
+    operationRef: stream.inspect
+    operationBindings:
+      name:
+        state: name
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: stream
         action: inspect
-    operationBindings:
-      name:
-        state: name
   - id: create-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: CreateConsumer
     receiverState: nats.jetstream
-    conditionTemplate: &id009
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: consumer
-        action: create
+    operationRef: consumer.create
     operationBindings:
-      stream: *id001
-      name: &id008
+      stream:
+        argument:
+          parameter: stream
+      name:
         argument:
           parameter: cfg
           field: Name
@@ -492,148 +555,232 @@ go:
       stateType: nats.consumer
       dependencyIdentity: inherit
       bindings:
-        stream: *id001
-        name: *id008
+        stream:
+          argument:
+            parameter: stream
+        name:
+          argument:
+            parameter: cfg
+            field: Name
+          optional: true
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: consumer
+        action: create
   - id: update-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: UpdateConsumer
     receiverState: nats.jetstream
-    conditionTemplate: &id010
+    operationRef: consumer.update
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: cfg
+          field: Name
+        optional: true
+    produces:
+      stateType: nats.consumer
+      dependencyIdentity: inherit
+      bindings:
+        stream:
+          argument:
+            parameter: stream
+        name:
+          argument:
+            parameter: cfg
+            field: Name
+          optional: true
+    conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: update
-    operationBindings:
-      stream: *id001
-      name: *id008
-    produces:
-      stateType: nats.consumer
-      dependencyIdentity: inherit
-      bindings:
-        stream: *id001
-        name: *id008
   - id: ordered-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: OrderedConsumer
     receiverState: nats.jetstream
-    conditionTemplate: *id009
+    operationRef: consumer.create
     operationBindings:
-      stream: *id001
+      stream:
+        argument:
+          parameter: stream
     produces:
       stateType: nats.consumer
       dependencyIdentity: inherit
       bindings:
-        stream: *id001
+        stream:
+          argument:
+            parameter: stream
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: consumer
+        action: create
   - id: delete-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: DeleteConsumer
     receiverState: nats.jetstream
+    operationRef: consumer.delete
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: delete
-    operationBindings:
-      stream: *id001
-      name:
-        argument:
-          parameter: consumer
   - id: create-push-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: CreatePushConsumer
     receiverState: nats.jetstream
-    conditionTemplate: *id009
+    operationRef: consumer.create
     operationBindings:
-      stream: *id001
-      name: *id008
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: cfg
+          field: Name
+        optional: true
     produces:
       stateType: nats.consumer
       dependencyIdentity: inherit
       bindings:
-        stream: *id001
-        name: *id008
+        stream:
+          argument:
+            parameter: stream
+        name:
+          argument:
+            parameter: cfg
+            field: Name
+          optional: true
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: consumer
+        action: create
   - id: update-push-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: UpdatePushConsumer
     receiverState: nats.jetstream
-    conditionTemplate: *id010
+    operationRef: consumer.update
     operationBindings:
-      stream: *id001
-      name: *id008
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: cfg
+          field: Name
+        optional: true
     produces:
       stateType: nats.consumer
       dependencyIdentity: inherit
       bindings:
-        stream: *id001
-        name: *id008
+        stream:
+          argument:
+            parameter: stream
+        name:
+          argument:
+            parameter: cfg
+            field: Name
+          optional: true
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: consumer
+        action: update
   - id: inspect-push-consumer
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: StreamConsumerManager
       method: PushConsumer
     receiverState: nats.jetstream
+    operationRef: consumer.inspect
+    operationBindings:
+      stream:
+        argument:
+          parameter: stream
+      name:
+        argument:
+          parameter: consumer
+    produces:
+      stateType: nats.consumer
+      dependencyIdentity: inherit
+      bindings:
+        stream:
+          argument:
+            parameter: stream
+        name:
+          argument:
+            parameter: consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: inspect
-    operationBindings:
-      stream: *id001
-      name: *id002
-    produces:
-      stateType: nats.consumer
-      dependencyIdentity: inherit
-      bindings:
-        stream: *id001
-        name: *id002
   - id: delete-key-value
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValueManager
       method: DeleteKeyValue
     receiverState: nats.jetstream
+    operationRef: key_value.delete
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: delete
-    operationBindings:
-      bucket: *id004
   - id: delete-object-store
     symbol:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStoreManager
       method: DeleteObjectStore
     receiverState: nats.jetstream
+    operationRef: object_store.delete
+    operationBindings:
+      bucket:
+        argument:
+          parameter: bucket
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: delete
-    operationBindings:
-      bucket: *id004
   - receiverState: nats.connection
-    conditionTemplate:
-      kind: nats
-      interfaceType: service
-      operation:
-        resource: subject
-        action: subscribe
+    operationRef: subject.subscribe
     operationBindings:
       subject:
         argument:
@@ -643,13 +790,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: ChanQueueSubscribe
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: subscribe
+  - receiverState: nats.connection
+    operationRef: subject.subscribe
     operationBindings:
       subject:
         argument:
@@ -659,13 +807,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: ChanSubscribe
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: subscribe
+  - receiverState: nats.connection
+    operationRef: subject.subscribe
     operationBindings:
       subject:
         argument:
@@ -675,13 +824,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: QueueSubscribe
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: subscribe
+  - receiverState: nats.connection
+    operationRef: subject.subscribe
     operationBindings:
       subject:
         argument:
@@ -691,13 +841,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: QueueSubscribeSync
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: subscribe
+  - receiverState: nats.connection
+    operationRef: subject.subscribe
     operationBindings:
       subject:
         argument:
@@ -707,13 +858,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: QueueSubscribeSyncWithChan
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: subscribe
+  - receiverState: nats.connection
+    operationRef: subject.subscribe
     operationBindings:
       subject:
         argument:
@@ -723,13 +875,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: SubscribeSync
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
-        action: request
+        action: subscribe
+  - receiverState: nats.connection
+    operationRef: subject.request
     operationBindings:
       subject:
         argument:
@@ -739,13 +892,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: RequestWithContext
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: request
+  - receiverState: nats.connection
+    operationRef: subject.request
     operationBindings:
       subject:
         argument:
@@ -756,13 +910,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: RequestMsg
-  - receiverState: nats.connection
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: subject
         action: request
+  - receiverState: nats.connection
+    operationRef: subject.request
     operationBindings:
       subject:
         argument:
@@ -773,13 +928,14 @@ go:
       package: github.com/nats-io/nats.go
       receiver: Conn
       method: RequestMsgWithContext
-  - receiverState: nats.jetstream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
-        resource: stream
-        action: publish
+        resource: subject
+        action: request
+  - receiverState: nats.jetstream
+    operationRef: stream.publish
     operationBindings:
       subject:
         argument:
@@ -790,13 +946,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Publisher
       method: PublishMsg
-  - receiverState: nats.jetstream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: stream
         action: publish
+  - receiverState: nats.jetstream
+    operationRef: stream.publish
     operationBindings:
       subject:
         argument:
@@ -807,13 +964,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Publisher
       method: PublishMsgAsync
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
-        resource: consumer
-        action: consume
+        resource: stream
+        action: publish
+  - receiverState: nats.consumer
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
@@ -825,13 +983,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: Fetch
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: consume
+  - receiverState: nats.consumer
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
@@ -843,13 +1002,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: FetchBytes
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: consume
+  - receiverState: nats.consumer
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
@@ -861,13 +1021,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: FetchNoWait
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: consume
+  - receiverState: nats.consumer
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
@@ -879,13 +1040,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: Messages
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: consume
+  - receiverState: nats.consumer
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
@@ -897,13 +1059,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: Next
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: create
+        action: consume
+  - receiverState: nats.stream
+    operationRef: consumer.create
     operationBindings:
       stream:
         state: name
@@ -928,13 +1091,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: CreateConsumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: create
+  - receiverState: nats.stream
+    operationRef: consumer.create
     operationBindings:
       stream:
         state: name
@@ -959,13 +1123,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: CreatePushConsumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: create
+  - receiverState: nats.stream
+    operationRef: consumer.create
     operationBindings:
       stream:
         state: name
@@ -980,13 +1145,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: OrderedConsumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: update
+        action: create
+  - receiverState: nats.stream
+    operationRef: consumer.update
     operationBindings:
       stream:
         state: name
@@ -1011,13 +1177,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: UpdateConsumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: update
+  - receiverState: nats.stream
+    operationRef: consumer.update
     operationBindings:
       stream:
         state: name
@@ -1042,13 +1209,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: UpdatePushConsumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: inspect
+        action: update
+  - receiverState: nats.stream
+    operationRef: consumer.inspect
     operationBindings:
       stream:
         state: name
@@ -1069,13 +1237,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: Consumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
         action: inspect
+  - receiverState: nats.stream
+    operationRef: consumer.inspect
     operationBindings:
       stream:
         state: name
@@ -1096,13 +1265,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: PushConsumer
-  - receiverState: nats.stream
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: delete
+        action: inspect
+  - receiverState: nats.stream
+    operationRef: consumer.delete
     operationBindings:
       stream:
         state: name
@@ -1114,13 +1284,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ConsumerManager
       method: DeleteConsumer
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: inspect
+        action: delete
+  - receiverState: nats.consumer
+    operationRef: consumer.inspect
     operationBindings:
       stream:
         state: stream
@@ -1132,13 +1303,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: Consumer
       method: Info
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: consume
+        action: inspect
+  - receiverState: nats.consumer
+    operationRef: consumer.consume
     operationBindings:
       stream:
         state: stream
@@ -1150,13 +1322,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: PushConsumer
       method: Consume
-  - receiverState: nats.consumer
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: consumer
-        action: inspect
+        action: consume
+  - receiverState: nats.consumer
+    operationRef: consumer.inspect
     operationBindings:
       stream:
         state: stream
@@ -1168,13 +1341,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: PushConsumer
       method: Info
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
-        resource: key_value
-        action: read
+        resource: consumer
+        action: inspect
+  - receiverState: nats.key_value
+    operationRef: key_value.read
     operationBindings:
       bucket:
         state: bucket
@@ -1183,13 +1357,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: GetRevision
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: read
+  - receiverState: nats.key_value
+    operationRef: key_value.read
     operationBindings:
       bucket:
         state: bucket
@@ -1198,13 +1373,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: History
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: read
+  - receiverState: nats.key_value
+    operationRef: key_value.read
     operationBindings:
       bucket:
         state: bucket
@@ -1213,13 +1389,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Keys
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: read
+  - receiverState: nats.key_value
+    operationRef: key_value.read
     operationBindings:
       bucket:
         state: bucket
@@ -1228,13 +1405,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: ListKeys
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: read
+  - receiverState: nats.key_value
+    operationRef: key_value.read
     operationBindings:
       bucket:
         state: bucket
@@ -1243,13 +1421,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: ListKeysFiltered
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
-        action: write
+        action: read
+  - receiverState: nats.key_value
+    operationRef: key_value.write
     operationBindings:
       bucket:
         state: bucket
@@ -1258,13 +1437,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Create
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: write
+  - receiverState: nats.key_value
+    operationRef: key_value.write
     operationBindings:
       bucket:
         state: bucket
@@ -1273,13 +1453,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Delete
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: write
+  - receiverState: nats.key_value
+    operationRef: key_value.write
     operationBindings:
       bucket:
         state: bucket
@@ -1288,13 +1469,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Purge
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: write
+  - receiverState: nats.key_value
+    operationRef: key_value.write
     operationBindings:
       bucket:
         state: bucket
@@ -1303,13 +1485,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: PurgeDeletes
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: write
+  - receiverState: nats.key_value
+    operationRef: key_value.write
     operationBindings:
       bucket:
         state: bucket
@@ -1318,13 +1501,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: PutString
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: write
+  - receiverState: nats.key_value
+    operationRef: key_value.write
     operationBindings:
       bucket:
         state: bucket
@@ -1333,13 +1517,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Update
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
-        action: watch
+        action: write
+  - receiverState: nats.key_value
+    operationRef: key_value.watch
     operationBindings:
       bucket:
         state: bucket
@@ -1348,13 +1533,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: WatchAll
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
         action: watch
+  - receiverState: nats.key_value
+    operationRef: key_value.watch
     operationBindings:
       bucket:
         state: bucket
@@ -1363,13 +1549,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: WatchFiltered
-  - receiverState: nats.key_value
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: key_value
-        action: inspect
+        action: watch
+  - receiverState: nats.key_value
+    operationRef: key_value.inspect
     operationBindings:
       bucket:
         state: bucket
@@ -1378,13 +1565,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: KeyValue
       method: Status
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
-        resource: object_store
-        action: read
+        resource: key_value
+        action: inspect
+  - receiverState: nats.object_store
+    operationRef: object_store.read
     operationBindings:
       bucket:
         state: bucket
@@ -1393,13 +1581,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: Get
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: read
+  - receiverState: nats.object_store
+    operationRef: object_store.read
     operationBindings:
       bucket:
         state: bucket
@@ -1408,13 +1597,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: GetBytes
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: read
+  - receiverState: nats.object_store
+    operationRef: object_store.read
     operationBindings:
       bucket:
         state: bucket
@@ -1423,13 +1613,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: GetFile
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: read
+  - receiverState: nats.object_store
+    operationRef: object_store.read
     operationBindings:
       bucket:
         state: bucket
@@ -1438,13 +1629,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: GetInfo
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: read
+  - receiverState: nats.object_store
+    operationRef: object_store.read
     operationBindings:
       bucket:
         state: bucket
@@ -1453,13 +1645,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: List
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
-        action: write
+        action: read
+  - receiverState: nats.object_store
+    operationRef: object_store.write
     operationBindings:
       bucket:
         state: bucket
@@ -1468,13 +1661,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: Delete
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: write
+  - receiverState: nats.object_store
+    operationRef: object_store.write
     operationBindings:
       bucket:
         state: bucket
@@ -1483,13 +1677,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: Put
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: write
+  - receiverState: nats.object_store
+    operationRef: object_store.write
     operationBindings:
       bucket:
         state: bucket
@@ -1498,13 +1693,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: PutBytes
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: write
+  - receiverState: nats.object_store
+    operationRef: object_store.write
     operationBindings:
       bucket:
         state: bucket
@@ -1513,13 +1709,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: PutFile
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
         action: write
+  - receiverState: nats.object_store
+    operationRef: object_store.write
     operationBindings:
       bucket:
         state: bucket
@@ -1528,13 +1725,14 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: UpdateMeta
-  - receiverState: nats.object_store
     conditionTemplate:
       kind: nats
       interfaceType: service
       operation:
         resource: object_store
-        action: inspect
+        action: write
+  - receiverState: nats.object_store
+    operationRef: object_store.inspect
     operationBindings:
       bucket:
         state: bucket
@@ -1543,3 +1741,9 @@ go:
       package: github.com/nats-io/nats.go/jetstream
       receiver: ObjectStore
       method: Status
+    conditionTemplate:
+      kind: nats
+      interfaceType: service
+      operation:
+        resource: object_store
+        action: inspect
