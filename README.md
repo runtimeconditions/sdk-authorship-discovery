@@ -6,6 +6,8 @@ Existing Runtime Conditions package-manifest conventions and profiler behavior a
 
 [`docs/test-cohort.md`](docs/test-cohort.md) defines the evolving cross-architecture cohort. Cases are investigated sequentially so one SDK family's implementation details do not silently become universal requirements. MongoDB Python and Go are now the active paired case after AWS, Kubernetes, and NATS; exporter, provider, and sidecar candidates remain deferred until their practical fit is clearer.
 
+[`docs/sdk-support-workflow.md`](docs/sdk-support-workflow.md) is the concise end-to-end ownership and artifact reference for service owners and SDK authors. It distinguishes maintained semantics, owner-specific potential generation, and artifacts that generic Runtime Conditions tooling can safely auto-generate.
+
 ## Application corpus
 
 The first slice uses the real AWS SDK for Python and S3. Keeping the service and language fixed lets the investigation compare source patterns without conflating them with unrelated service semantics or language-generation systems.
