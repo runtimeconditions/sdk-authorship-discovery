@@ -4,7 +4,7 @@ This repository contains independently runnable applications, owner-aligned SDK 
 
 Existing Runtime Conditions package-manifest conventions and profiler behavior are not treated as stable foundations. The current mapping architecture is the result of this corpus and remains subject to SDK-maintainer review before cross-language standardization or profiler adoption.
 
-[`docs/test-cohort.md`](docs/test-cohort.md) defines the accepted cross-architecture cohort: AWS Python, Kubernetes Python, NATS Go, OpenTelemetry Python, OpenFeature Go, and Dapr Java. Cases are investigated sequentially so one SDK family's implementation details do not silently become universal requirements.
+[`docs/test-cohort.md`](docs/test-cohort.md) defines the evolving cross-architecture cohort. Cases are investigated sequentially so one SDK family's implementation details do not silently become universal requirements. MongoDB Python and Go are now the active paired case after AWS, Kubernetes, and NATS; exporter, provider, and sidecar candidates remain deferred until their practical fit is clearer.
 
 ## Application corpus
 
@@ -27,6 +27,8 @@ Every project uses ordinary boto3 code, can perform a real S3 request with norma
 The second model-generated family begins under [`kubernetes`](kubernetes/) with an unchanged application using the official Kubernetes Python client. Its extension and SDK mapping are deliberately separate from the AWS implementation.
 
 [`authorship/kubernetes-python`](authorship/kubernetes-python/) projects the exact Python 36.0.3 generator input into statically verified public SDK symbols, joins generated endpoints back to the authoritative Kubernetes inventory, source-verifies one handwritten `Watch.stream` delegation and one DynamicClient state flow, targets an immutable Kubernetes API extension release, packages the mapping into a locally rebuilt wheel, profiles five unchanged typed and dynamic applications, and replays the 36.0.x release line. Built-in DynamicClient resources resolve through an extension-generated selector catalog; unmodeled CRDs remain silent because static source does not prove the plural resource name or scope supplied by live discovery.
+
+[`mongodb`](mongodb/) begins a paired Python and Go study of two official handwritten drivers governed by common driver specifications and backed by a server codebase with YAML-formatted IDL. Eight equivalent application patterns per language establish ground truth for unused clients, collection CRUD, transactions, change streams, GridFS, independent clients, dynamic namespaces, and application wrappers before any extension or mapping shape is chosen. [`authorship/mongodb/REVIEW.md`](authorship/mongodb/REVIEW.md) records the exact sources, authority boundary, expected maintainer responsibilities, and next implementation gate.
 
 ## Set up and test the applications
 
@@ -81,7 +83,7 @@ The final Kubernetes Python generator processes v36.0.0 through v36.0.3 with no 
 
 ## Expansion policy
 
-The next investigation axis remains SDK architecture rather than another AWS service. Kubernetes has exercised generated methods, dynamic generated endpoints, a higher-order callable wrapper, and a discovery-created stateful resource. NATS has now exercised a primarily handwritten client in Go and Python against one language-neutral service mapping, proving semantic reuse while exposing substantial remaining binding and state-authoring burden. OpenTelemetry, OpenFeature, and Dapr remain the next cohort members for exporter, provider, and sidecar delegation models. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
+The next investigation axis remains SDK architecture rather than another AWS service. Kubernetes has exercised generated methods, dynamic generated endpoints, a higher-order callable wrapper, and a discovery-created stateful resource. NATS exercised a primarily handwritten client in Go and Python against one language-neutral service mapping, proving semantic reuse while exposing substantial remaining binding and state-authoring burden. MongoDB Python and Go are now the active paired case because they test a useful runtime dependency across two supported languages and expose a new authority stack: server IDL, cross-driver behavioral specifications, and handwritten language APIs. OpenTelemetry, OpenFeature, and Dapr remain useful architectural candidates for exporter, provider, and sidecar delegation, but they are deferred rather than dictating the immediate sequence. DynamoDB and SQS remain useful later for expanding service coverage inside the accepted AWS family.
 
 New languages belong in separate independently buildable projects under `s3/<language>/`. Adding a corpus project does not authorize a profiler change; language-profiler expansion is discussed separately before implementation.
 

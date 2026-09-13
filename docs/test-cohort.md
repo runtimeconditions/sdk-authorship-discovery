@@ -13,19 +13,18 @@ The cohort will be investigated sequentially. Each case must produce a detailed 
 | AWS S3 through boto3, botocore, and s3transfer | Python | Model-generated vendor SDK with handwritten wrappers and nested distributions | Can an authoritative service model, small SDK-owned overlays, and recursively packaged mappings remain aligned across releases? |
 | Kubernetes official client | Python | OpenAPI-generated CNCF SDK | Does the generated workflow generalize beyond Smithy, and can it represent an extensible API without treating built-in resources as the entire platform? |
 | NATS client | Go | Primarily handwritten direct integration | Can maintainers describe ordinary client behavior without maintaining an operation table or changing the public SDK? |
-| OpenTelemetry SDK and OTLP exporter | Python | SDK plus separately packaged exporter | Can the mapping prove an external telemetry destination only when an exporter establishes one, while core, console, and in-memory configurations remain condition-free? |
-| OpenFeature SDK and provider | Go | Stable API with provider delegation | Can recursively composed mappings distinguish no-op or in-memory providers from providers that prove an external flag service? |
-| Dapr SDK | Java | Portable API delegated through a sidecar and runtime-selected components | Can a mapping preserve the logical Dapr capability without incorrectly claiming the application directly requires the configured database, broker, or secret store? |
+| MongoDB official drivers | Python and Go | Primarily handwritten language drivers governed by common specifications and backed by server IDL | Can one service authority support two idiomatic SDKs without duplicating service semantics, and can callbacks and wrappers enhance ordinary namespace demands? |
 
-OpenFeature will use Go, as selected for this investigation. Language choice is part of the test: the cohort must reveal the profiler contract each architecture actually needs. A profiler is not treated as frozen; any required change is reviewed explicitly and must preserve its existing regression suite.
+The MongoDB case begins in Python and Go together so cross-language reuse is tested before one implementation establishes the convention. Language choice is part of every case: the cohort must reveal the profiler contract each architecture actually needs. A profiler is not treated as frozen; any required change is reviewed explicitly and must preserve its existing regression suite.
+
+OpenTelemetry exporters, OpenFeature providers, and Dapr sidecar delegation remain valuable architectural candidates. They are deferred because the investigation is now prioritizing broadly useful application SDKs, and their exact Runtime Conditions boundaries require additional product or maintainer discussion before they become the next implementation case.
 
 ## Sequence
 
 1. Use the completed Kubernetes Python case as the second model-generated family and retain only the conclusions independently demonstrated by both it and AWS.
 2. Complete the NATS Go case to test the authoring burden when there is no comprehensive service model from which to derive public behavior.
-3. Complete the OpenTelemetry Python case to establish the package-boundary and exporter-delegation contract.
-4. Complete the OpenFeature Go case to challenge that contract with no-op, local, remote, named, and composed providers.
-5. Complete the Dapr Java case to test whether Runtime Conditions preserves a portable logical capability across a sidecar and swappable runtime components.
+3. Investigate the MongoDB Python and Go drivers as one paired case, beginning with server-model authority and equivalent application fixtures before defining extension vocabulary or language mappings.
+4. Select the next practical SDK only after the MongoDB case shows which conclusions generalize across two handwritten language APIs. Exporter, provider, and sidecar cases remain available when their Runtime Conditions product boundary is ready for review.
 
 The cases are not implemented in parallel. Findings from a completed case may change the questions, fixture selection, or proposed artifacts for later cases.
 
@@ -50,4 +49,4 @@ If an archetype genuinely requires additional metadata, the investigation will d
 
 ## Current work
 
-The AWS Python case has packaging, maintenance, and real profiler evidence across seven unchanged applications, including direct factories, application data flow, resources, nested transfer mappings, and unresolved dynamic selection. The Kubernetes Python case now covers generated typed-client calls, dynamic generated endpoints, installed mapping discovery, one source-verified `Watch.stream` condition delegation, and one source-verified DynamicClient producer/state/method flow consumed without SDK imports or application declarations. Its 95 built-in selectors are generated from extension semantics, its eight DynamicClient operations remain distinct, and an unmodeled CRD emits nothing. This closes the Kubernetes investigation at an explicit capability boundary and makes NATS Go the next active case.
+The AWS Python case has packaging, maintenance, and real profiler evidence across seven unchanged applications, including direct factories, application data flow, resources, nested transfer mappings, and unresolved dynamic selection. The Kubernetes Python case covers generated typed-client calls, dynamic generated endpoints, installed mapping discovery, one source-verified `Watch.stream` condition delegation, and one source-verified DynamicClient producer/state/method flow consumed without SDK imports or application declarations. NATS then established one shared service authority across handwritten Go and Python clients while exposing the remaining size of language-specific binding and state input. MongoDB is now active with eight paired Python and Go fixtures and an initial finding that public server IDL may avoid a fallback Operations Inventory for core commands; no MongoDB extension or SDK mapping has yet been approved.
