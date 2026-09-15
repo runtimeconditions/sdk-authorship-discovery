@@ -4,7 +4,7 @@
 
 **Source-grounded application corpus complete; extension and SDK mapping design intentionally not started.**
 
-Eight paired Python and Go applications now compile against the current official drivers and exercise the source patterns that should constrain the authorship design. This phase does not claim Runtime Conditions coverage, and it has not created a MongoDB extension, Semantic Bridge, service mapping, SDK overlay, generated SDK mapping, or profiler special case.
+Eight paired Python and Go applications now compile against the current official drivers and exercise the source patterns that should constrain the authorship design. This phase does not claim Runtime Conditions coverage, and it has not created a MongoDB extension, optional source-model supplement, service mapping, SDK overlay, generated SDK mapping, or profiler special case.
 
 That stopping point is deliberate. MongoDB exposes more usable upstream authority than a primarily handwritten SDK such as NATS, but it does not resemble one Smithy or OpenAPI document. Designing the extension from PyMongo methods alone would turn Python implementation details into service semantics; designing it from server commands alone could expose more detail than an adapter can act on. The next phase must establish the join between those sources before any mapping is considered valid.
 
@@ -53,8 +53,8 @@ The experiment should attempt to keep service-level and SDK-level obligations na
 | Work | Expected human owner | Expected automation |
 | --- | --- | --- |
 | MongoDB protocol command definitions and authorization declarations | MongoDB server maintainers through their existing IDL workflow | Project stable public commands, namespaces, fields, and access checks from a pinned server release |
-| Cross-driver behavior such as transactions, change streams, and GridFS | MongoDB driver-specification maintainers through their existing specification workflow | Detect relevant specification revisions and validate that bridge assumptions still reference accepted behavior |
-| Adapter-actionable Runtime Conditions semantics | Extension and service stakeholders, potentially including MongoDB maintainers | Compile and validate the reviewed Semantic Bridge and immutable extension release |
+| Cross-driver behavior such as transactions, change streams, and GridFS | MongoDB driver-specification maintainers through their existing specification workflow | Detect relevant specification revisions and validate that direct-projection assumptions still reference accepted behavior |
+| Adapter-actionable integration projection | Extension and service stakeholders, potentially including MongoDB maintainers | Compile and validate the authoritative-model projection, using a small supplement only for demonstrated IDL gaps, and publish the immutable extension release |
 | Python and Go public symbol/state alignment | Respective driver maintainers or community contributors with their review | Project mechanically declared methods and signatures, validate handwritten associations, and generate final mappings |
 | Concrete deployment, database, collection, or bucket values | Application source | Resolve ordinary source values conservatively through the language profiler |
 
@@ -81,7 +81,7 @@ The next step is to build a narrow, deterministic projection from a pinned stabl
 3. What is the adapter-actionable minimum: deployment access only, database and collection identity, read/write/watch/transaction capabilities, GridFS bucket identity, or some smaller combination?
 4. Does that minimum supersede the generic `common-integrations` MongoDB condition, or can a precise non-duplicative relationship be defined?
 
-Only after that review should we create a Semantic Bridge and extension release. The Python and Go SDK overlays then become independent joins to the same generated service mapping, followed by real-profiler integration and regression testing. If the IDL proves incomplete as a practical service authority, the failure itself will justify a MongoDB Service Operations Inventory instead of assuming one in advance.
+The next review should attempt to create the extension release and service mapping directly from MongoDB's IDL and specifications. A semantic supplement should be created only if that attempt identifies an exact integration fact the authority cannot express; the gap and each residual entry must be documented. The Python and Go SDK overlays then become independent joins to the same generated service mapping, followed by real-profiler integration and regression testing. If the IDL proves incomplete as a practical operation authority, the failure itself will justify a MongoDB Service Operations Inventory instead of assuming one in advance.
 
 ## Verification completed
 

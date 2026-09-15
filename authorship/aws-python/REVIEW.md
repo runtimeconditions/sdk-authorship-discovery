@@ -100,7 +100,7 @@ The index identifies the owning distribution, exact installed version, mapping i
 
 | Capability | Status |
 | --- | --- |
-| Generate canonical service semantics from AWS's authoritative public Smithy model plus a reviewed Service Operations Semantic Bridge | Proved |
+| Generate the current service projection from AWS's authoritative public Smithy model plus the prototype's reviewed supplement | Proved for this compiler; supplement necessity not yet proved |
 | Generate language and SDK surfaces from existing resource models and focused wrapper annotations | Proved for the Python case |
 | Split mappings across independently versioned behavior owners | Proved across three real Python distributions |
 | Validate package versions, modeled inventories, generated names, handwritten signatures, bindings, and delegates against source | Proved |
@@ -208,7 +208,7 @@ Those mechanics should not dominate this review. The detailed service operation 
 - [`../../../extensions/aws-s3/docs/validation.md`](../../../extensions/aws-s3/docs/validation.md)
 - [`../../../extensions/aws-s3/docs/sdk-author-workflow.md`](../../../extensions/aws-s3/docs/sdk-author-workflow.md)
 
-The reviewed S3 Service Operations Semantic Bridge and the three SDK-specific annotation files are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The generated YAML should only be inspected for representative spot checks or to investigate a failed validation claim.
+The current S3 projection supplement and the three SDK-specific annotation files are under [`../../../extensions/aws-s3/model`](../../../extensions/aws-s3/model/). The supplement is service-level prototype input and must not be assigned to SDK maintainers; its contents still require a derivability audit. The generated YAML should only be inspected for representative spot checks or to investigate a failed validation claim.
 
 ## Current maintenance experiment
 

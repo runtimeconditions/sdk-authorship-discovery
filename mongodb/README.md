@@ -46,6 +46,6 @@ The corpus verification used during authorship work compiles every application w
 
 ## Current boundary
 
-This phase establishes source authority and application ground truth only. It does not yet define a MongoDB extension, Semantic Bridge, service mapping, SDK overlay, generated mapping, or profiler behavior. Those artifacts must follow evidence from the server model and both driver APIs rather than being reverse-engineered from whichever fixture is easiest to support.
+This phase establishes source authority and application ground truth only. It does not yet define a MongoDB extension, optional source-model supplement, service mapping, SDK overlay, generated mapping, or profiler behavior. The next phase must attempt direct projection from MongoDB's authority and create a supplement only for a documented fact that cannot be derived; the remaining artifacts must follow evidence from the server model and both driver APIs rather than being reverse-engineered from whichever fixture is easiest to support.
 
 The existing `common-integrations` extension can declare a generic `datastore` Condition with `interface.type: document` and `interface.engine: mongodb`. It is intentionally not used as ground truth for this experiment. Whether a future MongoDB extension supersedes that vocabulary, composes with it, or motivates its deprecation will be decided after the adapter-actionable minimum is understood.
