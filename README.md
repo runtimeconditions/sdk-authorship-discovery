@@ -2,6 +2,8 @@
 
 This repository contains independently runnable applications, owner-aligned SDK authorship proofs, and historical and ongoing maintenance experiments for external-resource requirements expressed through SDK usage.
 
+[`docs/planned-mapping-user-experience.md`](docs/planned-mapping-user-experience.md) records the accepted planned experience for explicitly resolving external SDK mappings and generating profiles without implicit network access. It supersedes the research prototypes as the end-user workflow target; SDK mapping authorship and registry maintenance remain to be redesigned.
+
 Existing Runtime Conditions package-manifest conventions and profiler behavior are not treated as stable foundations. The current mapping architecture is the result of this corpus and remains subject to SDK-maintainer review before cross-language standardization or profiler adoption.
 
 [`docs/test-cohort.md`](docs/test-cohort.md) defines the evolving cross-architecture cohort. Cases are investigated sequentially so one SDK family's implementation details do not silently become universal requirements. MongoDB Python and Go are now the active paired case after AWS, Kubernetes, and NATS; exporter, provider, and sidecar candidates remain deferred until their practical fit is clearer.
