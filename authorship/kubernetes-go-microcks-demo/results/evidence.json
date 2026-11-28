@@ -1,0 +1,322 @@
+{
+  "clientGo": "v0.36.2",
+  "goVersion": "go1.26.5",
+  "microcks": {
+    "image": "quay.io/microcks/microcks-uber:latest-native",
+    "version": "unknown"
+  },
+  "observations": [
+    {
+      "case": "pod-list",
+      "groupVersionKind": {
+        "group": "",
+        "kind": "Pod",
+        "version": "v1"
+      },
+      "kubernetesAction": "list",
+      "operationId": "listCoreV1NamespacedPod",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/namespaces/demo/pods",
+        "status": 200
+      },
+      "requestMatched": true,
+      "responseVerified": true,
+      "sdkMethod": "k8s.io/client-go/kubernetes/typed/core/v1.PodInterface.List",
+      "sdkSuccess": true,
+      "serverOperation": "GET /api/v1/namespaces/{namespace}/pods",
+      "service": "rc-kubernetes-core",
+      "spanId": "88103f02e08bc7dc",
+      "spans": [
+        {
+          "attributes": {
+            "operation.method": "GET",
+            "operation.name": "GET /api/v1/namespaces/{namespace}/pods",
+            "service.name": "rc-kubernetes-core",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-core/v1.36.2/api/v1/namespaces/demo/pods"
+          },
+          "spanId": "88103f02e08bc7dc",
+          "traceId": "82f08ffbd3d98a02a4a4a1e1746e2699"
+        }
+      ],
+      "traceId": "82f08ffbd3d98a02a4a4a1e1746e2699"
+    },
+    {
+      "case": "configmap-get",
+      "groupVersionKind": {
+        "group": "",
+        "kind": "ConfigMap",
+        "version": "v1"
+      },
+      "kubernetesAction": "get",
+      "operationId": "readCoreV1NamespacedConfigMap",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/namespaces/demo/configmaps/settings",
+        "status": 200
+      },
+      "requestMatched": true,
+      "responseVerified": true,
+      "sdkMethod": "k8s.io/client-go/kubernetes/typed/core/v1.ConfigMapInterface.Get",
+      "sdkSuccess": true,
+      "serverOperation": "GET /api/v1/namespaces/{namespace}/configmaps/{name}",
+      "service": "rc-kubernetes-core",
+      "spanId": "a025ca8570099e06",
+      "spans": [
+        {
+          "attributes": {
+            "operation.method": "GET",
+            "operation.name": "GET /api/v1/namespaces/{namespace}/configmaps/{name}",
+            "service.name": "rc-kubernetes-core",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-core/v1.36.2/api/v1/namespaces/demo/configmaps/settings"
+          },
+          "spanId": "a025ca8570099e06",
+          "traceId": "a562652fd7c8d6fecdb8f519d92ac56c"
+        }
+      ],
+      "traceId": "a562652fd7c8d6fecdb8f519d92ac56c"
+    },
+    {
+      "case": "pod-list",
+      "groupVersionKind": {
+        "group": "",
+        "kind": "Pod",
+        "version": "v1"
+      },
+      "kubernetesAction": "list",
+      "operationId": "listCoreV1NamespacedPod",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/namespaces/demo/pods",
+        "status": 200
+      },
+      "requestMatched": true,
+      "responseVerified": false,
+      "sdkMethod": "k8s.io/client-go/kubernetes/typed/core/v1.PodInterface.List",
+      "sdkSuccess": false,
+      "serverOperation": "GET /api/v1/namespaces/{namespace}/pods",
+      "service": "rc-kubernetes-malformed",
+      "spanId": "98ae643122f49242",
+      "spans": [
+        {
+          "attributes": {
+            "operation.method": "GET",
+            "operation.name": "GET /api/v1/namespaces/{namespace}/pods",
+            "service.name": "rc-kubernetes-malformed",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-malformed/v1.36.2/api/v1/namespaces/demo/pods"
+          },
+          "spanId": "98ae643122f49242",
+          "traceId": "e9374e252575e58bb294423e37c683e2"
+        }
+      ],
+      "traceId": "e9374e252575e58bb294423e37c683e2"
+    },
+    {
+      "case": "configmap-get",
+      "groupVersionKind": {
+        "group": "",
+        "kind": "ConfigMap",
+        "version": "v1"
+      },
+      "kubernetesAction": "get",
+      "operationId": "readCoreV1NamespacedConfigMap",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/namespaces/demo/configmaps/settings",
+        "status": 200
+      },
+      "requestMatched": true,
+      "responseVerified": false,
+      "sdkMethod": "k8s.io/client-go/kubernetes/typed/core/v1.ConfigMapInterface.Get",
+      "sdkSuccess": false,
+      "serverOperation": "GET /api/v1/namespaces/{namespace}/configmaps/{name}",
+      "service": "rc-kubernetes-malformed",
+      "spanId": "bdee888598253c4d",
+      "spans": [
+        {
+          "attributes": {
+            "operation.method": "GET",
+            "operation.name": "GET /api/v1/namespaces/{namespace}/configmaps/{name}",
+            "service.name": "rc-kubernetes-malformed",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-malformed/v1.36.2/api/v1/namespaces/demo/configmaps/settings"
+          },
+          "spanId": "bdee888598253c4d",
+          "traceId": "006544c20da3e3100ffca6c062ab2d0f"
+        }
+      ],
+      "traceId": "006544c20da3e3100ffca6c062ab2d0f"
+    }
+  ],
+  "openapi": {
+    "operationCount": 248,
+    "pathCount": 113,
+    "sha256": "a3cbb14c08e7832e80776e717a5658a178dccb3562cc5c1238193634b6985ff8",
+    "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/24e2b02af5543d7910c2bb074c7264df5a8f0467/api/openapi-spec/v3/api__v1_openapi.json"
+  },
+  "platform": {
+    "arch": "amd64",
+    "os": "windows"
+  },
+  "rejectedControls": [
+    {
+      "control": "sparse-pod-list",
+      "invocation": {
+        "case": "pod-list",
+        "requests": [
+          {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-sparse/v1.36.2/api/v1/namespaces/demo/pods",
+            "status": 404,
+            "transportError": false
+          }
+        ],
+        "responseVerified": false,
+        "sdkMethod": "k8s.io/client-go/kubernetes/typed/core/v1.PodInterface.List",
+        "sdkSuccess": false,
+        "traceId": "39bdd66fc4c8f7c664ec9d485acedeb0"
+      },
+      "reason": "expected one operation span, found 0",
+      "requestMatched": false,
+      "spans": [
+        {
+          "attributes": {
+            "service.name": "rc-kubernetes-sparse",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received",
+            "operation_not_found"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-sparse/v1.36.2/api/v1/namespaces/demo/pods"
+          },
+          "spanId": "a3997c4a46313d4a",
+          "traceId": "39bdd66fc4c8f7c664ec9d485acedeb0"
+        }
+      ]
+    },
+    {
+      "control": "sparse-configmap-get",
+      "invocation": {
+        "case": "configmap-get",
+        "requests": [
+          {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-sparse/v1.36.2/api/v1/namespaces/demo/configmaps/settings",
+            "status": 404,
+            "transportError": false
+          }
+        ],
+        "responseVerified": false,
+        "sdkMethod": "k8s.io/client-go/kubernetes/typed/core/v1.ConfigMapInterface.Get",
+        "sdkSuccess": false,
+        "traceId": "7ab1342e8d94b1a672e62a2cf0887196"
+      },
+      "reason": "expected one operation span, found 0",
+      "requestMatched": false,
+      "spans": [
+        {
+          "attributes": {
+            "service.name": "rc-kubernetes-sparse",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received",
+            "operation_not_found"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-sparse/v1.36.2/api/v1/namespaces/demo/configmaps/settings"
+          },
+          "spanId": "04532e49ece7af5f",
+          "traceId": "7ab1342e8d94b1a672e62a2cf0887196"
+        }
+      ]
+    },
+    {
+      "control": "missing-trace",
+      "httpStatus": 404,
+      "reason": "missing or cross-trace evidence"
+    },
+    {
+      "control": "unmatched-request",
+      "invocation": {
+        "case": "unmatched-control",
+        "requests": [
+          {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-core/v1.36.2/api/v1/namespaces/demo/not-a-resource",
+            "status": 404,
+            "transportError": false
+          }
+        ],
+        "responseVerified": false,
+        "sdkMethod": "raw HTTP control (not an SDK fixture)",
+        "sdkSuccess": false,
+        "traceId": "acf4830554c3b491528817f993e404e8"
+      },
+      "reason": "expected one operation span, found 0",
+      "spans": [
+        {
+          "attributes": {
+            "service.name": "rc-kubernetes-core",
+            "service.version": "v1.36.2"
+          },
+          "events": [
+            "invocation_received",
+            "operation_not_found"
+          ],
+          "invocation": {
+            "hasQuery": false,
+            "method": "GET",
+            "path": "/rest/rc-kubernetes-core/v1.36.2/api/v1/namespaces/demo/not-a-resource"
+          },
+          "spanId": "7993bf6f2d7c1777",
+          "traceId": "acf4830554c3b491528817f993e404e8"
+        }
+      ]
+    },
+    {
+      "control": "ambiguous-operation-span",
+      "reason": "expected one operation span, found 2"
+    }
+  ]
+}
